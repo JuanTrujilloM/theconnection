@@ -1,0 +1,3 @@
+# Root-level artifacts — real lock files live in frontend/ and backend/
+package-lock.json
+node_modules/
