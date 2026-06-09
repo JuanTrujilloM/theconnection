@@ -6,10 +6,14 @@ Exclusive dating app for students at private universities in Colombia. Delivers 
 
 ## Prerequisites
 
-Make sure you have the following installed:
-
 - [Node.js](https://nodejs.org/) v20+
 - [npm](https://www.npmjs.com/) v10+
+- [PostgreSQL 16](https://www.postgresql.org/) via Homebrew
+
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+```
 
 ---
 
@@ -24,32 +28,33 @@ cd theconnection
 
 ## 2. Install dependencies
 
-Run this in two separate terminals (or sequentially):
-
 ```bash
-# Backend
-cd backend
-npm install
-
-# Frontend
-cd frontend
-npm install
+cd backend && npm install
+cd ../frontend && npm install
 ```
 
 ---
 
-## 3. Configure environment variables
+## 3. Create the database
 
-### Backend — create `backend/.env`
+```bash
+createdb theconnection
+```
+
+---
+
+## 4. Configure environment variables
+
+### Backend — `backend/.env`
 
 ```bash
 NODE_ENV=development
 PORT=3001
-DATABASE_URL="prisma+postgres://localhost:51213/?api_key=<your-local-key>"
-JWT_SECRET=any-random-string-for-local-dev
-JWT_EXPIRES_IN=7d
+DATABASE_URL="postgresql://<your-mac-username>@localhost:5432/theconnection"
 
 # Optional for local dev (leave empty if not testing these features)
+JWT_SECRET=any-random-string-for-local-dev
+JWT_EXPIRES_IN=7d
 WHATSAPP_TOKEN=
 WHATSAPP_PHONE_NUMBER_ID=
 WHATSAPP_VERIFY_TOKEN=
@@ -59,9 +64,9 @@ AWS_S3_BUCKET=
 AWS_SQS_QUEUE_URL=
 ```
 
-> The `DATABASE_URL` is already set in the `.env` file included in the repo. No need to change it.
+> Replace `<your-mac-username>` with your system username (e.g. `juantrujillo`). No password required locally.
 
-### Frontend — create `frontend/.env.local`
+### Frontend — `frontend/.env.local`
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:3001
@@ -70,36 +75,27 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ---
 
-## 4. Run database migrations
+## 5. Run database migrations
 
 ```bash
 cd backend
 npx prisma migrate dev
 ```
 
+This creates all tables in the local database.
+
 ---
 
-## 5. Start the development servers
+## 6. Start the development servers
 
-This project requires **3 terminals** open at the same time:
-
-**Terminal 1 — Database** (must be running before the backend starts):
-
-```bash
-cd backend
-npx prisma dev
-```
-
-> This starts a local Postgres database managed by Prisma. No separate PostgreSQL installation needed. Keep this terminal open the entire time you work.
-
-**Terminal 2 — Backend** (runs on port 3001):
+**Terminal 1 — Backend** (port 3001):
 
 ```bash
 cd backend
 npm run start:dev
 ```
 
-**Terminal 3 — Frontend** (runs on port 3000):
+**Terminal 2 — Frontend** (port 3000):
 
 ```bash
 cd frontend
@@ -108,26 +104,41 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The API is available at [http://localhost:3001](http://localhost:3001).
+---
+
+## What's running
+
+The home page at `http://localhost:3000` shows:
+
+- **Frontend** status (Next.js)
+- **Backend** status (NestJS on `:3001`)
+- **Database** status (PostgreSQL — connected / disconnected)
+- List of **registered users** in the database
+
+### Available API endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Backend and database status |
+| GET | `/users` | User list (without `passwordHash`) |
 
 ---
 
 ## Useful commands
 
 ```bash
-# Regenerate Prisma client after schema changes
+# Add a migration after changing the schema
+cd backend && npx prisma migrate dev --name <name>
+
+# Regenerate the Prisma client
 cd backend && npx prisma generate
 
-# Open the visual database explorer
+# Visual database explorer
 cd backend && npx prisma studio
 
 # Lint
 cd backend && npm run lint
 cd frontend && npm run lint
-
-# Build for production
-cd backend && npm run build
-cd frontend && npm run build
 ```
 
 ---
@@ -136,8 +147,21 @@ cd frontend && npm run build
 
 ```
 theconnection/
-├── frontend/    # Next.js 14 + Tailwind CSS
-└── backend/     # NestJS + Prisma ORM
+├── frontend/
+│   └── src/
+│       ├── app/                 # Pages (Next.js App Router)
+│       ├── components/shared/   # Reusable components
+│       ├── hooks/               # State management with React Query
+│       └── lib/api/             # Backend API calls
+└── backend/
+    ├── prisma/
+    │   ├── schema/              # One .prisma file per model
+    │   └── migrations/          # SQL migration history
+    └── src/
+        ├── config/              # PrismaService, PrismaModule
+        └── modules/
+            ├── health/          # GET /health
+            └── users/           # GET /users
 ```
 
 See [CLAUDE.md](CLAUDE.md) for full architecture, data model, and code conventions.
