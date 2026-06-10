@@ -79,10 +79,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ```bash
 cd backend
+npx prisma generate
 npx prisma migrate dev
 ```
 
-This creates all tables in the local database.
+This generates the Prisma client and creates all tables in the local database.
 
 ---
 
