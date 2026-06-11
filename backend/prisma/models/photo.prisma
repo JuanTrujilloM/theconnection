@@ -6,5 +6,6 @@ model Photo {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 }
