@@ -1,0 +1,16 @@
+model Match {
+  id                 String   @id @default(cuid())
+  userAId            String
+  userBId            String
+  compatibilityScore Float
+  status             String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  userA          User           @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB          User           @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  date           Date?
+  venueOptions   VenueOption[]
+  availabilities Availability[]
+}

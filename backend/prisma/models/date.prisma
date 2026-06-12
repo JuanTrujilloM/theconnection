@@ -1,0 +1,14 @@
+model Date {
+  id          String   @id @default(cuid())
+  matchId     String   @unique
+  venueId     String
+  scheduledAt DateTime
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  match     Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  venue     Venue      @relation(fields: [venueId], references: [id])
+  feedbacks Feedback[]
+}

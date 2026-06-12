@@ -1,0 +1,16 @@
+model Feedback {
+  id           String   @id @default(cuid())
+  dateId       String
+  userId       String
+  occurred     Boolean
+  rating       Int?
+  comments     String?
+  noShowReason String?
+  amountSpent  Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  date Date @relation(fields: [dateId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

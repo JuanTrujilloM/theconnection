@@ -7,6 +7,14 @@ model User {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  profile     Profile?
-  preferences Preferences?
+  profile             Profile?
+  preferences         Preferences?
+  matchesAsUserA      Match[]        @relation("MatchUserA")
+  matchesAsUserB      Match[]        @relation("MatchUserB")
+  availabilities      Availability[]
+  feedbacks           Feedback[]
+  venueOptionsAsUserA VenueOption[]  @relation("VenueOptionUserA")
+  venueOptionsAsUserB VenueOption[]  @relation("VenueOptionUserB")
+  reportsAsUserA      Report[]       @relation("ReportUserA")
+  reportsAsUserB      Report[]       @relation("ReportUserB")
 }
