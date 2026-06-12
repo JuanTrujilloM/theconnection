@@ -1,0 +1,24 @@
+services:
+  postgres:
+    # Postgres 16 with pgvector precompiled — no manual extension install needed
+    image: pgvector/pgvector:pg16
+    container_name: theconnection-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: theconnection
+      POSTGRES_PASSWORD: theconnection
+      POSTGRES_DB: theconnection
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Runs once on first boot, when the data volume is empty
+      - ./init-pgvector.sql:/docker-entrypoint-initdb.d/init-pgvector.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U theconnection -d theconnection"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
