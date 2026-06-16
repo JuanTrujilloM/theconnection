@@ -6,8 +6,6 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   findAll() {
-    return this.prisma.user.findMany({
-      omit: { passwordHash: true },
-    });
+    return this.prisma.user.findMany();
   }
 }
