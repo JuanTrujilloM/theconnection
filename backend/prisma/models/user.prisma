@@ -7,8 +7,10 @@ model User {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  profile             Profile?
-  preferences         Preferences?
+  profile                Profile?
+  preferences            Preferences?
+  emailVerificationCodes EmailVerificationCode[]
+  refreshTokens          RefreshToken[]
   matchesAsUserA      Match[]        @relation("MatchUserA")
   matchesAsUserB      Match[]        @relation("MatchUserB")
   availabilities      Availability[]
