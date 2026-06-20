@@ -5,10 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { registerSchema, type RegisterValues } from '@/lib/validation/auth';
 import { useRegister } from '@/hooks/useRegister';
-import { getApiErrorMessage } from '@/lib/api/client';
-
-const inputClass =
-  'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100';
+import { getApiErrorMessage } from '@/lib/utils/errors';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export function RegisterForm() {
   const router = useRouter();
@@ -38,12 +37,11 @@ export function RegisterForm() {
         >
           Correo universitario
         </label>
-        <input
+        <Input
           id="email"
           type="email"
           autoComplete="email"
           placeholder="nombre@eafit.edu.co"
-          className={inputClass}
           {...register('email')}
         />
         {errors.email && (
@@ -58,12 +56,11 @@ export function RegisterForm() {
         >
           Celular
         </label>
-        <input
+        <Input
           id="cellphone"
           type="tel"
           autoComplete="tel"
           placeholder="+57 300 123 4567"
-          className={inputClass}
           {...register('cellphone')}
         />
         {errors.cellphone && (
@@ -75,13 +72,9 @@ export function RegisterForm() {
         <p className="text-sm text-red-500">{errors.root.message}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition disabled:opacity-50 dark:bg-white dark:text-zinc-900"
-      >
+      <Button type="submit" disabled={isPending}>
         {isPending ? 'Enviando...' : 'Continuar'}
-      </button>
+      </Button>
     </form>
   );
 }

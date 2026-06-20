@@ -41,10 +41,10 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
+  // Onboarding: register / verify email / resend code
   async register(dto: RegisterDto): Promise<{ message: string }> {
     const email = this.normalizeEmail(dto.email);
 
-    // Defense in depth — the DTO already enforces this, but never trust the edge.
     if (!isSupportedUniversityEmail(email)) {
       throw new BadRequestException('Only verified university emails are accepted.');
     }
@@ -81,16 +81,10 @@ export class AuthService {
       throw new BadRequestException(this.messageForResult(result));
     }
 
-    // Email is now verified (the code was consumed in `validate`), but `isVerified`
-    // stays false until phone verification ships — it represents a fully verified account.
     return this.issueSession(user);
   }
 
-  /**
-   * Exchanges a refresh token for a fresh access/refresh pair. A replayed (already
-   * rotated) token means the cookie was stolen, so we revoke every session for that
-   * user and force a fresh login.
-   */
+  // Session: refresh / logout / current user
   async refresh(refreshToken: string | undefined): Promise<Session> {
     if (!refreshToken) {
       throw new UnauthorizedException('Missing refresh token.');
@@ -126,13 +120,11 @@ export class AuthService {
     const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({ where: { email } });
 
-    // Silently no-op for unknown / already-verified emails to avoid enumeration.
     if (!user || (await this.verificationCodes.hasVerifiedEmail(user.id))) {
       return { message: NEUTRAL_MESSAGE };
     }
 
-    const wait =
-      await this.verificationCodes.getSecondsUntilResendAllowed(user.id);
+    const wait = await this.verificationCodes.getSecondsUntilResendAllowed(user.id);
     if (wait > 0) {
       throw new HttpException(
         `Please wait ${wait}s before requesting another code.`,
@@ -152,6 +144,7 @@ export class AuthService {
     return this.toSafeUser(user);
   }
 
+  // Internal helpers — token signing, mailing, validation, mapping
   private async issueSession(user: SafeUser): Promise<Session> {
     const accessToken = await this.signAccessToken(user.id, user.email);
     const refreshToken = await this.refreshTokens.issueForUser(user.id);

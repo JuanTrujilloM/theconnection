@@ -18,7 +18,8 @@ export class RefreshTokenService {
     private readonly config: ConfigService,
   ) {}
 
-  /** Mints an opaque refresh token, persists its hash, and returns the plaintext. */
+  // Opaque token; DB keeps only its hash. Plaintext is returned for the cookie.
+  // No wipe of previous tokens — a user can hold several (one per device).
   async issueForUser(userId: string): Promise<string> {
     const token = randomBytes(32).toString('base64url');
     await this.prisma.refreshToken.create({
@@ -31,22 +32,20 @@ export class RefreshTokenService {
     return token;
   }
 
-  /**
-   * Validates a refresh token and rotates it: the presented token is revoked and a
-   * fresh one is issued. Presenting an already-revoked token means it was stolen and
-   * replayed — we surface that so the caller can revoke the whole family.
-   */
+  // Single-use: revoke the presented token and issue a fresh one.
   async rotate(token: string): Promise<RotationResult> {
     const record = await this.prisma.refreshToken.findUnique({
       where: { tokenHash: this.hash(token) },
     });
 
     if (!record) return { status: 'invalid' };
+    // Already revoked but presented again = stolen & replayed. Caller revokes the family.
     if (record.revokedAt) {
       return { status: 'reuse_detected', userId: record.userId };
     }
     if (record.expiresAt.getTime() < Date.now()) return { status: 'expired' };
 
+    // Revoke-old + issue-new must be atomic, or a crash mid-way orphans the session.
     const next = randomBytes(32).toString('base64url');
     await this.prisma.$transaction([
       this.prisma.refreshToken.update({
@@ -65,7 +64,7 @@ export class RefreshTokenService {
     return { status: 'ok', userId: record.userId, token: next };
   }
 
-  /** Revokes a single token (logout on this device). No-op if it is unknown. */
+  // Logout on this device. updateMany (not update) so an unknown token is a no-op.
   async revoke(token: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { tokenHash: this.hash(token), revokedAt: null },
@@ -73,7 +72,7 @@ export class RefreshTokenService {
     });
   }
 
-  /** Revokes every active token for a user (logout everywhere / security event). */
+  // Logout everywhere — used on reuse detection and global sign-out.
   async revokeAllForUser(userId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
@@ -81,10 +80,13 @@ export class RefreshTokenService {
     });
   }
 
+  // sha256, not bcrypt: 256-bit tokens are brute-force-proof, and a deterministic
+  // hash lets us look them up by equality (findUnique on tokenHash).
   private hash(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
 
+  // For simplicity, the TTL is computed here and baked into the DB record; no background cleanup.
   private computeExpiry(): Date {
     const days = Number(
       this.config.get<string>('JWT_REFRESH_EXPIRES_DAYS') ?? DEFAULT_TTL_DAYS,

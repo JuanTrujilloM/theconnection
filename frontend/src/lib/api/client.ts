@@ -2,10 +2,8 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-/**
- * Shared axios instance. `withCredentials` is required so the HttpOnly auth
- * cookie issued by the backend is sent and stored across requests.
- */
+// Shared axios instance. withCredentials is required so the HttpOnly auth cookie
+// issued by the backend is sent and stored across requests.
 export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -50,15 +48,3 @@ apiClient.interceptors.response.use(
     return apiClient(original);
   },
 );
-
-export function getApiErrorMessage(
-  error: unknown,
-  fallback = 'Algo salió mal. Intenta de nuevo.',
-): string {
-  if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (Array.isArray(message) && message.length > 0) return String(message[0]);
-    if (typeof message === 'string') return message;
-  }
-  return fallback;
-}

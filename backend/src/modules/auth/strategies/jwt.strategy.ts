@@ -15,6 +15,7 @@ export interface AuthenticatedUser {
   email: string;
 }
 
+// Stateless JWT strategy for protecting routes. The guard extracts the token from the cookie,
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService) {

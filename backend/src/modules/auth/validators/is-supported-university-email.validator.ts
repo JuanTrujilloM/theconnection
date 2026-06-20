@@ -6,6 +6,7 @@ import {
 } from 'class-validator';
 import { isSupportedUniversityEmail } from '../constants/university-domains';
 
+// Custom validator to check if an email belongs to a supported university domain.
 @ValidatorConstraint({ name: 'isSupportedUniversityEmail', async: false })
 export class IsSupportedUniversityEmailConstraint
   implements ValidatorConstraintInterface
@@ -19,6 +20,7 @@ export class IsSupportedUniversityEmailConstraint
   }
 }
 
+// Decorator to apply the custom validator on DTO properties.
 export function IsSupportedUniversityEmail(
   validationOptions?: ValidationOptions,
 ) {

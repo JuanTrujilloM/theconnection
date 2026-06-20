@@ -88,6 +88,8 @@ export class AuthController {
     return { message: 'Logged out.' };
   }
 
+  // Cookie helpers (HTTP transport, not business logic)
+  // Tokens come from AuthService; these only decide how they ride on the response.
   private setSessionCookies(
     res: Response,
     accessToken: string,
@@ -109,7 +111,6 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: isProd,
-      // 'none' (cross-site) requires Secure; only safe in prod over HTTPS.
       sameSite: isProd ? 'none' : 'lax',
       path: '/',
     };

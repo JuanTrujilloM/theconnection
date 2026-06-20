@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { verificationCodeEmail } from './templates/verification-code.template';
 
 @Injectable()
 export class MailService implements OnModuleInit {
@@ -18,6 +19,8 @@ export class MailService implements OnModuleInit {
     this.devMode = !this.config.get<string>('SMTP_HOST');
   }
 
+  // Build the transporter once at startup. In dev, jsonTransport swallows mail
+  // instead of opening an SMTP connection.
   onModuleInit() {
     this.transporter = this.devMode
       ? nodemailer.createTransport({ jsonTransport: true })
@@ -33,6 +36,7 @@ export class MailService implements OnModuleInit {
   }
 
   async sendVerificationCode(email: string, code: string): Promise<void> {
+    // Dev shortcut: log the code so you can verify locally without an inbox.
     if (this.devMode) {
       this.logger.warn(
         `[dev mail] verification code for ${email}: ${code} (SMTP not configured)`,
@@ -40,22 +44,12 @@ export class MailService implements OnModuleInit {
       return;
     }
 
+    const { subject, html } = verificationCodeEmail(code);
     await this.transporter.sendMail({
       from: this.from,
       to: email,
-      subject: 'Your TheConnection verification code',
-      html: this.buildVerificationHtml(code),
+      subject,
+      html,
     });
-  }
-
-  private buildVerificationHtml(code: string): string {
-    return `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2>Verify your university email</h2>
-        <p>Use the code below to finish creating your TheConnection account:</p>
-        <p style="font-size: 32px; font-weight: bold; letter-spacing: 6px;">${code}</p>
-        <p style="color: #666;">This code expires in a few minutes. If you didn't request it, you can ignore this email.</p>
-      </div>
-    `;
   }
 }

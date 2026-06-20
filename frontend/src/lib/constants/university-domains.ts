@@ -1,8 +1,6 @@
-/**
- * Supported private-university email domains.
- * Mirror of backend `src/modules/auth/constants/university-domains.ts` — keep both
- * in sync (there is no shared package between frontend and backend yet).
- */
+// Supported private-university email domains. Mirror of the backend list
+// (src/modules/auth/constants/university-domains.ts) — keep both in sync; there
+// is no shared package between frontend and backend yet.
 export const SUPPORTED_UNIVERSITY_DOMAINS = [
   'eafit.edu.co',
   'upb.edu.co',

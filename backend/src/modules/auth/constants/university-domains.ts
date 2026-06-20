@@ -1,7 +1,5 @@
-/**
- * Supported private-university email domains (CLAUDE.md "Supported Universities").
- * The map doubles as the source for HU-02's auto-detected `Profile.university`.
- */
+// Supported private-university email domains (CLAUDE.md "Supported Universities").
+// The map doubles as the source for HU-02's auto-detected Profile.university.
 export const DOMAIN_TO_UNIVERSITY: Record<string, string> = {
   // Phase 1 — Medellín
   'eafit.edu.co': 'EAFIT',
@@ -19,10 +17,12 @@ export const SUPPORTED_UNIVERSITY_DOMAINS = new Set(
   Object.keys(DOMAIN_TO_UNIVERSITY),
 );
 
+// Normalizes an email for consistent processing and comparison: trim + lowercase.
 export function getEmailDomain(email: string): string {
   return email.trim().toLowerCase().split('@')[1] ?? '';
 }
 
+// Checks if the email belongs to a supported university domain.
 export function isSupportedUniversityEmail(email: string): boolean {
   return SUPPORTED_UNIVERSITY_DOMAINS.has(getEmailDomain(email));
 }
