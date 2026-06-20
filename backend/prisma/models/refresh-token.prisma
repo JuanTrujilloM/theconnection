@@ -1,0 +1,12 @@
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique // sha256 of the opaque token — high entropy, so a fast deterministic hash is fine and keeps lookups O(1)
+  expiresAt DateTime
+  revokedAt DateTime? // set on rotation or logout; a revoked token presented again signals reuse
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

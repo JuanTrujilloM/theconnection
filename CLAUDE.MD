@@ -12,7 +12,7 @@ TheConnection is an exclusive dating app for students at private universities in
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14 + Tailwind CSS + React Query |
+| Frontend | Next.js 16 + Tailwind CSS + React Query |
 | Backend | NestJS + Prisma ORM |
 | Database | PostgreSQL + pgvector (AI embeddings) |
 | WhatsApp Bot | NestJS + Meta WhatsApp Cloud API |
@@ -257,6 +257,40 @@ Page (app/) → Hook (hooks/) → API client (lib/api/) → Backend
 - Comment the **why**, not the **what**
 - No logic in controllers
 - No direct fetch calls inside components or pages
+
+---
+
+## Documentation (comments)
+
+One comment style across the whole repo — **backend and frontend alike**. Keep it simple.
+(Auto-generated code such as `backend/src/generated/` is exempt; never hand-edit it.)
+
+### Format
+- Use single-line `//` comments. **No JSDoc blocks (`/** */`)** for everyday code.
+- Place the comment on the line directly above what it explains, or inline at the end of the line.
+- Write in English, present tense, short declarative phrases. No filler adjectives ("robust", "carefully", "elegantly").
+
+### What to comment
+- Comment only what the code **cannot say for itself**: a *why*, an invariant, a gotcha, a cross-file effect, a security decision.
+- Skip comments that restate the code (`// validate the code`, `// send the email`).
+- Good signals worth a line: anti-enumeration choices, single-use/atomicity invariants, why a value is hashed one way vs another, a constant that mirrors the other side of the stack, an email-client quirk (inline styles), why something is safe to interpolate.
+
+### Examples
+```ts
+// Good — explains a non-obvious decision
+// sha256, not bcrypt: 256-bit tokens are brute-force-proof, and a deterministic
+// hash lets us look them up by equality (findUnique on tokenHash).
+
+// Good — flags a cross-stack dependency
+// Mirror of the backend resend cooldown; keep in sync until the API returns it.
+
+// Bad — restates the code
+// hash the token and save it
+```
+
+### Section dividers
+For longer files, group methods with a one-line header that lists what follows
+(an index, not prose): `// Session: refresh / logout / current user`.
 
 ---
 
