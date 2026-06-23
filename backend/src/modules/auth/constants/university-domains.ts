@@ -26,3 +26,11 @@ export function getEmailDomain(email: string): string {
 export function isSupportedUniversityEmail(email: string): boolean {
   return SUPPORTED_UNIVERSITY_DOMAINS.has(getEmailDomain(email));
 }
+
+// Resolves the university name from a verified email. Derived server-side so the
+// stored Profile.university can't be spoofed by the client (HU-02).
+export function universityFromEmail(email: string): string {
+  return (
+    DOMAIN_TO_UNIVERSITY[getEmailDomain(email)] ?? 'Universidad verificada'
+  );
+}

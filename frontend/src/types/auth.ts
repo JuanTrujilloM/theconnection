@@ -3,6 +3,9 @@ export interface AuthUser {
   email: string;
   cellphone: string;
   isVerified: boolean;
+  // Derived server-side (User.onboardingCompletedAt != null). Drives the
+  // onboarding-vs-dashboard routing for returning users.
+  onboardingCompleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
