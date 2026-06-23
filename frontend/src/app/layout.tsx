@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TheConnection",
-  description: "Dating app for university students in Colombia",
+  title: "TheConnection — Citas curadas para universitarios",
+  description:
+    "Una cita real por semana, curada por IA, solo para estudiantes de universidades privadas en Colombia.",
 };
 
 export default function RootLayout({
@@ -25,12 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-          <Providers>{children}</Providers>
-        </body>
+      <body className="bg-navy-deep text-cream flex min-h-full flex-col">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
