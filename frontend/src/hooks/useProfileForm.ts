@@ -36,7 +36,6 @@ export function useProfileForm(user: AuthUser, edit = false) {
       biography: '',
       major: '',
       semester: undefined,
-      availability: [],
     },
   });
 
@@ -86,10 +85,6 @@ function toFormValues(profile: ProfileResponse): ProfileValues {
     biography: profile.biography,
     major: profile.major,
     semester: profile.semester as ProfileValues['semester'],
-    // availability is stored comma-joined; split it back into the chip array.
-    availability: profile.availability
-      ? (profile.availability.split(', ') as ProfileValues['availability'])
-      : [],
   };
 }
 
@@ -104,7 +99,6 @@ function buildProfileFormData(values: ProfileValues): FormData {
   data.append('biography', values.biography);
   data.append('major', values.major);
   data.append('semester', values.semester);
-  data.append('availability', values.availability.join(', '));
 
   const manifest = values.photos.map((photo) => {
     if (photo.file) {

@@ -7,7 +7,6 @@ import { PersonalInfoCard } from './profile/PersonalInfoCard';
 import { PhotosCard } from './profile/PhotosCard';
 import { AcademicInfoCard } from './profile/AcademicInfoCard';
 import { AboutYouCard } from './profile/AboutYouCard';
-import { AvailabilityCard } from './profile/AvailabilityCard';
 
 // HU-02 — personal profile form. `edit` switches between onboarding (create) and
 // editing a saved profile. All state logic lives in useProfileForm.
@@ -34,7 +33,6 @@ export function ProfileForm({
       <PhotosCard form={form} />
       <AcademicInfoCard form={form} university={university} />
       <AboutYouCard form={form} />
-      <AvailabilityCard form={form} />
 
       {rootError && <p className="text-blush text-sm">{rootError}</p>}
 

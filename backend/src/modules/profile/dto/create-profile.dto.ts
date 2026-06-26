@@ -51,11 +51,6 @@ export class CreateProfileDto {
   @IsIn(SEMESTERS, { message: 'Invalid semester.' })
   semester!: string;
 
-  // Time-of-day availability tags, comma-joined (HU-09 onboarding step).
-  @IsString()
-  @IsNotEmpty({ message: 'Availability is required.' })
-  availability!: string;
-
   // Ordered JSON array describing the final photo set: each entry is 'new'
   // (next uploaded file) or 'keep:<url>' (retain an existing photo).
   @IsOptional()

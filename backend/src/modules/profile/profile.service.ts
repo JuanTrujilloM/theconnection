@@ -47,7 +47,9 @@ export class ProfileService {
       university: universityFromEmail(email),
       major: dto.major,
       semester: dto.semester,
-      availability: dto.availability,
+      // availability is omitted here: new profiles default to SEARCHING and the
+      // status is toggled separately from the dashboard, so editing the profile
+      // must not reset it.
     };
 
     const saved = await this.prisma.$transaction(async (tx) => {
@@ -133,6 +135,16 @@ export class ProfileService {
   getByUserId(userId: string) {
     return this.prisma.profile.findUnique({
       where: { userId },
+      include: { photos: true },
+    });
+  }
+
+  // Toggles the dashboard searching/paused status. Returns the updated profile so
+  // the client can reflect the new state without a refetch.
+  setAvailability(userId: string, availability: string) {
+    return this.prisma.profile.update({
+      where: { userId },
+      data: { availability },
       include: { photos: true },
     });
   }

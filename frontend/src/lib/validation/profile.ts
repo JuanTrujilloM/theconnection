@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
   GENDER_OPTIONS,
   SEMESTER_OPTIONS,
-  AVAILABILITY_OPTIONS,
   MIN_AGE,
   MIN_PHOTOS,
   MAX_PHOTOS,
@@ -54,9 +53,6 @@ export const profileSchema = z.object({
     .max(MAX_BIO_LENGTH, `Máximo ${MAX_BIO_LENGTH} caracteres.`),
   major: z.string().trim().min(1, 'Ingresa tu carrera.'),
   semester: z.enum(SEMESTER_OPTIONS, { message: 'Selecciona tu semestre.' }),
-  availability: z
-    .array(z.enum(AVAILABILITY_OPTIONS))
-    .min(1, 'Selecciona al menos una franja.'),
 });
 
 export type ProfileValues = z.infer<typeof profileSchema>;

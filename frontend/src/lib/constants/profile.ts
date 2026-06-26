@@ -33,11 +33,18 @@ export const MAX_PHOTOS = 5;
 // Biography character cap (HU-02).
 export const MAX_BIO_LENGTH = 150;
 
-// Time-of-day availability options (HU-09 onboarding step). Stored on the
-// profile as a comma-joined string; mirror of the backend.
-export const AVAILABILITY_OPTIONS = [
-  'Mañana',
-  'Tarde',
-  'Noche',
-  'Todo el día',
-] as const;
+// Matching status stored on Profile.availability, toggled from the dashboard.
+// Mirror of the backend (AVAILABILITY_STATUSES); keep both in sync.
+export const AVAILABILITY_STATUS = {
+  SEARCHING: 'SEARCHING',
+  PAUSED: 'PAUSED',
+} as const;
+
+export type AvailabilityStatus =
+  (typeof AVAILABILITY_STATUS)[keyof typeof AVAILABILITY_STATUS];
+
+// User-facing labels for each status (the stored value stays language-neutral).
+export const AVAILABILITY_LABELS: Record<AvailabilityStatus, string> = {
+  SEARCHING: 'Buscando cita',
+  PAUSED: 'En pausa',
+};

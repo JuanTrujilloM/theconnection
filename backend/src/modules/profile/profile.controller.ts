@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   UploadedFiles,
   UseGuards,
@@ -13,6 +14,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
+import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 import { MAX_PHOTOS } from './constants/profile-options';
 
 @Controller('profile')
@@ -33,5 +35,14 @@ export class ProfileController {
     @UploadedFiles() photos: Express.Multer.File[],
   ) {
     return this.profileService.save(user.userId, user.email, dto, photos);
+  }
+
+  // Dashboard searching/paused toggle.
+  @Patch('availability')
+  setAvailability(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateAvailabilityDto,
+  ) {
+    return this.profileService.setAvailability(user.userId, dto.availability);
   }
 }

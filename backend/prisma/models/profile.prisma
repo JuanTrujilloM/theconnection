@@ -9,7 +9,7 @@ model Profile {
   university   String
   major        String
   semester     String
-  availability String
+  availability String   @default("SEARCHING")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
