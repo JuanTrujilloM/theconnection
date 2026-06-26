@@ -1,13 +1,16 @@
 import { forwardRef, type InputHTMLAttributes } from 'react';
 
+// Brand text input on the navy surface. Cyan focus ring, blush ring on error.
 const base =
-  'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100';
+  'w-full rounded-xl border bg-navy-soft px-4 py-2.5 text-sm text-cream placeholder:text-slate outline-none transition focus:border-cyan focus:ring-2 focus:ring-cyan/30';
 
 // forwardRef so react-hook-form's register() can attach its ref.
-// className is appended, letting callers tweak per-field styling (e.g. the OTP field).
 export const Input = forwardRef<
   HTMLInputElement,
-  InputHTMLAttributes<HTMLInputElement>
->(function Input({ className = '', ...props }, ref) {
-  return <input ref={ref} className={`${base} ${className}`} {...props} />;
+  InputHTMLAttributes<HTMLInputElement> & { hasError?: boolean }
+>(function Input({ className = '', hasError = false, ...props }, ref) {
+  const borderColor = hasError ? 'border-blush' : 'border-white/10';
+  return (
+    <input ref={ref} className={`${base} ${borderColor} ${className}`} {...props} />
+  );
 });

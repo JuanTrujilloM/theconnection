@@ -16,6 +16,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResendCodeDto } from './dto/resend-code.dto';
+import { LoginDto } from './dto/login.dto';
 import {
   ACCESS_TOKEN_COOKIE,
   ACCESS_TOKEN_MAX_AGE_MS,
@@ -33,6 +34,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
   }
 
   @Post('verify')
@@ -74,10 +81,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const current = req.cookies?.[REFRESH_TOKEN_COOKIE] as string | undefined;
     await this.authService.logout(current);
     res.clearCookie(ACCESS_TOKEN_COOKIE, this.baseCookieOptions());

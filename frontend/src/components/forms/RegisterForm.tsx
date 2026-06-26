@@ -33,7 +33,7 @@ export function RegisterForm() {
       <div className="space-y-1">
         <label
           htmlFor="email"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          className="text-cream text-sm font-medium"
         >
           Correo universitario
         </label>
@@ -45,14 +45,14 @@ export function RegisterForm() {
           {...register('email')}
         />
         {errors.email && (
-          <p className="text-xs text-red-500">{errors.email.message}</p>
+          <p className="text-blush text-xs">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-1">
         <label
           htmlFor="cellphone"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          className="text-cream text-sm font-medium"
         >
           Celular
         </label>
@@ -64,15 +64,15 @@ export function RegisterForm() {
           {...register('cellphone')}
         />
         {errors.cellphone && (
-          <p className="text-xs text-red-500">{errors.cellphone.message}</p>
+          <p className="text-blush text-xs">{errors.cellphone.message}</p>
         )}
       </div>
 
       {errors.root && (
-        <p className="text-sm text-red-500">{errors.root.message}</p>
+        <p className="text-blush text-sm">{errors.root.message}</p>
       )}
 
-      <Button type="submit" disabled={isPending}>
+      <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? 'Enviando...' : 'Continuar'}
       </Button>
     </form>

@@ -47,9 +47,9 @@ export function VerificationForm() {
 
   if (!email) {
     return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-slate text-sm">
         No encontramos tu correo.{' '}
-        <Link href="/register" className="underline">
+        <Link href="/register" className="text-cyan underline">
           Vuelve a registrarte
         </Link>
         .
@@ -59,8 +59,9 @@ export function VerificationForm() {
 
   const onSubmit = async (values: VerifyValues) => {
     try {
-      await verify({ email, code: values.code });
-      router.push('/onboarding');
+      // Returning users (login) skip onboarding; new users (register) start it.
+      const user = await verify({ email, code: values.code });
+      router.push(user.onboardingCompleted ? '/dashboard' : '/onboarding/perfil');
     } catch (error) {
       setError('root', { message: getApiErrorMessage(error) });
     }
@@ -79,12 +80,9 @@ export function VerificationForm() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-slate text-sm">
         Ingresa el código de 6 dígitos que enviamos a{' '}
-        <span className="font-medium text-zinc-900 dark:text-zinc-100">
-          {email}
-        </span>
-        .
+        <span className="text-cream font-medium">{email}</span>.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -99,32 +97,32 @@ export function VerificationForm() {
             {...register('code')}
           />
           {errors.code && (
-            <p className="text-xs text-red-500">{errors.code.message}</p>
+            <p className="text-blush text-xs">{errors.code.message}</p>
           )}
         </div>
 
         {errors.root && (
-          <p className="text-sm text-red-500">{errors.root.message}</p>
+          <p className="text-blush text-sm">{errors.root.message}</p>
         )}
 
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? 'Verificando...' : 'Verificar'}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-zinc-500">
+      <div className="text-slate text-center text-sm">
         <button
           type="button"
           onClick={onResend}
           disabled={isResending || cooldown > 0}
-          className="underline disabled:no-underline disabled:opacity-50"
+          className="text-cyan underline disabled:text-slate disabled:no-underline disabled:opacity-50"
         >
           {cooldown > 0
             ? `Reenviar código en ${cooldown}s`
             : 'Reenviar código'}
         </button>
         {resendNotice && (
-          <p className="mt-1 text-xs text-zinc-400">{resendNotice}</p>
+          <p className="text-slate mt-1 text-xs">{resendNotice}</p>
         )}
       </div>
     </div>

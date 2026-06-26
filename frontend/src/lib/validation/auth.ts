@@ -20,5 +20,11 @@ export const verifySchema = z.object({
   code: z.string().regex(/^\d{6}$/, 'El código debe tener 6 dígitos.'),
 });
 
+// Login is passwordless: just the university email; the code is sent by email.
+export const loginSchema = z.object({
+  email: registerSchema.shape.email,
+});
+
 export type RegisterValues = z.infer<typeof registerSchema>;
 export type VerifyValues = z.infer<typeof verifySchema>;
+export type LoginValues = z.infer<typeof loginSchema>;

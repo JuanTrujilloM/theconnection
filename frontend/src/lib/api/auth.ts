@@ -11,6 +11,16 @@ export async function register(
   return data;
 }
 
+// Passwordless login: requests a verification code for an existing account.
+export async function requestLoginCode(
+  email: string,
+): Promise<{ message: string }> {
+  const { data } = await apiClient.post<{ message: string }>('/auth/login', {
+    email,
+  });
+  return data;
+}
+
 export async function verifyCode(payload: VerifyPayload): Promise<AuthUser> {
   const { data } = await apiClient.post<{ user: AuthUser }>(
     '/auth/verify',
