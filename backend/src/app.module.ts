@@ -8,6 +8,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
     AuthModule,
     ProfileModule,
     PreferencesModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
