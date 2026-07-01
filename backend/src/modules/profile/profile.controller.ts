@@ -43,6 +43,6 @@ export class ProfileController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateAvailabilityDto,
   ) {
-    return this.profileService.setAvailability(user.userId, dto.availability);
+    return this.profileService.setAvailability(user.userId, dto.status);
   }
 }

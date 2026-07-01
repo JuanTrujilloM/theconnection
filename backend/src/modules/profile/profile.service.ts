@@ -47,7 +47,7 @@ export class ProfileService {
       university: universityFromEmail(email),
       major: dto.major,
       semester: dto.semester,
-      // availability is omitted here: new profiles default to SEARCHING and the
+      // status is omitted here: new profiles default to SEARCHING and the
       // status is toggled separately from the dashboard, so editing the profile
       // must not reset it.
     };
@@ -141,10 +141,10 @@ export class ProfileService {
 
   // Toggles the dashboard searching/paused status. Returns the updated profile so
   // the client can reflect the new state without a refetch.
-  setAvailability(userId: string, availability: string) {
+  setAvailability(userId: string, status: string) {
     return this.prisma.profile.update({
       where: { userId },
-      data: { availability },
+      data: { status },
       include: { photos: true },
     });
   }

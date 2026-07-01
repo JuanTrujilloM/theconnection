@@ -34,7 +34,7 @@ function DashboardContent({ user }: { user: AuthUser }) {
   }, [match?.venueSelectionPending, router]);
 
   const status =
-    (profile?.availability as AvailabilityStatus | undefined) ??
+    (profile?.status as AvailabilityStatus | undefined) ??
     AVAILABILITY_STATUS.SEARCHING;
 
   return (
