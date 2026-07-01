@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { RegisterForm } from '@/components/forms/RegisterForm';
+import { GuestGate } from '@/components/shared/GuestGate';
 
 export default function RegisterPage() {
   return (
-    <>
+    <GuestGate>
       <div className="space-y-1">
         <h1 className="text-cream text-xl font-bold">Crea tu cuenta</h1>
         <p className="text-slate text-sm">
@@ -20,6 +21,6 @@ export default function RegisterPage() {
           Inicia sesión
         </Link>
       </p>
-    </>
+    </GuestGate>
   );
 }
