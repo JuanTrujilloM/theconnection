@@ -23,6 +23,6 @@ export interface ProfileResponse {
   university: string;
   major: string;
   semester: string;
-  availability: string;
+  status: string;
   photos: ProfilePhotoResponse[];
 }

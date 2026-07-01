@@ -6,6 +6,8 @@ export interface AuthUser {
   // Derived server-side (User.onboardingCompletedAt != null). Drives the
   // onboarding-vs-dashboard routing for returning users.
   onboardingCompleted: boolean;
+  // Allowlist-derived (ADMIN_EMAILS); gates the admin venue-management view.
+  isAdmin: boolean;
   createdAt: string;
   updatedAt: string;
 }

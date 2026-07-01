@@ -33,7 +33,7 @@ export const MAX_PHOTOS = 5;
 // Biography character cap (HU-02).
 export const MAX_BIO_LENGTH = 150;
 
-// Matching status stored on Profile.availability, toggled from the dashboard.
+// Matching status stored on Profile.status, toggled from the dashboard.
 // Mirror of the backend (AVAILABILITY_STATUSES); keep both in sync.
 export const AVAILABILITY_STATUS = {
   SEARCHING: 'SEARCHING',

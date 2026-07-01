@@ -13,6 +13,7 @@ import { VerificationCodeService } from './verification-code.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { ACCESS_TOKEN_TTL } from './constants/cookie';
 import { isSupportedUniversityEmail } from './constants/university-domains';
+import { isAdminEmail } from '../../common/constants/admin';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResendCodeDto } from './dto/resend-code.dto';
@@ -27,6 +28,8 @@ type SafeUser = {
   cellphone: string;
   isVerified: boolean;
   onboardingCompleted: boolean;
+  // Allowlist-derived (ADMIN_EMAILS); drives the admin venue-management view.
+  isAdmin: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -208,6 +211,7 @@ export class AuthService {
       cellphone: user.cellphone,
       isVerified: user.isVerified,
       onboardingCompleted: user.profile !== null && user.preferences !== null,
+      isAdmin: isAdminEmail(user.email),
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

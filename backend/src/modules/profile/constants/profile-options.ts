@@ -28,7 +28,7 @@ export const MIN_AGE = 18;
 export const MAX_PHOTOS = 5;
 export const MAX_BIO_LENGTH = 150;
 
-// Matching status stored on Profile.availability. Toggled from the dashboard:
+// Matching status stored on Profile.status. Toggled from the dashboard:
 // the user is either actively looking or paused. Mirror of the frontend
 // constant (frontend/src/lib/constants/profile.ts); keep both in sync.
 export const AVAILABILITY_STATUSES = ['SEARCHING', 'PAUSED'] as const;

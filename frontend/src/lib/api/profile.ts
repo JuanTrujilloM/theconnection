@@ -17,11 +17,11 @@ export async function fetchMyProfile(): Promise<ProfileResponse | null> {
 
 // Flips the dashboard searching/paused toggle. Returns the updated profile.
 export async function updateAvailability(
-  availability: AvailabilityStatus,
+  status: AvailabilityStatus,
 ): Promise<ProfileResponse> {
   const { data } = await apiClient.patch<ProfileResponse>(
     '/profile/availability',
-    { availability },
+    { status },
   );
   return data;
 }

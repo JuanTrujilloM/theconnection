@@ -8,6 +8,9 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
+import { VenuesModule } from './modules/venues/venues.module';
+import { MatchesModule } from './modules/matches/matches.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
     AuthModule,
     ProfileModule,
     PreferencesModule,
+    VenuesModule,
+    MatchesModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
