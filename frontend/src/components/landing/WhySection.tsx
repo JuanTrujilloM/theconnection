@@ -47,7 +47,8 @@ export function WhySection() {
             No es otra app de citas
           </h2>
           <p className="text-slate mx-auto mt-3 max-w-md">
-            Somos la que de verdad te lleva a la cita.
+            Somos la que <span className="text-coral font-medium">de verdad</span>{' '}
+            te lleva a la cita.
           </p>
         </Reveal>
 

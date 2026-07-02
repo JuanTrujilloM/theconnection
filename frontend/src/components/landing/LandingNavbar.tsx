@@ -30,13 +30,15 @@ export function LandingNavbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/login"
-            className="text-slate hover:text-cream px-2 text-sm font-medium transition-colors"
+            className="text-slate hover:text-flame px-2 text-sm font-medium transition-colors"
           >
             Iniciar sesión
           </Link>
           {/* CTA routes to the existing registration flow. */}
           <Link href="/register">
-            <Button className="px-5 py-2">Únete ahora</Button>
+            <Button variant="sunset" className="px-5 py-2">
+              Únete ahora
+            </Button>
           </Link>
         </div>
       </nav>
