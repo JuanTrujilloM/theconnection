@@ -3,8 +3,8 @@
 export function PhoneMockup() {
   return (
     <div className="animate-float relative mx-auto w-[260px] sm:w-[300px]">
-      {/* Glow behind the device. */}
-      <div className="bg-cyan/20 absolute -inset-6 -z-10 rounded-[3rem] blur-3xl" />
+      {/* Warm glow behind the device. */}
+      <div className="bg-coral/20 absolute -inset-6 -z-10 rounded-[3rem] blur-3xl" />
 
       <div className="border-white/15 bg-navy rounded-[2.5rem] border-[10px] p-3 shadow-2xl">
         {/* Notch */}
@@ -19,7 +19,7 @@ export function PhoneMockup() {
           {/* Match notification card */}
           <div className="border-cyan/30 bg-navy-soft rounded-2xl border p-4">
             <div className="flex items-center gap-3">
-              <div className="from-cyan to-blush flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-xl">
+              <div className="from-coral to-flame flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-xl">
                 💌
               </div>
               <div>
@@ -48,12 +48,12 @@ export function PhoneMockup() {
           </div>
 
           {/* Compatibility pill */}
-          <div className="bg-gold/10 border-gold/30 flex items-center justify-between rounded-xl border px-3 py-2">
+          <div className="bg-amber/10 border-amber/30 flex items-center justify-between rounded-xl border px-3 py-2">
             <span className="text-cream text-xs">Compatibilidad</span>
-            <span className="text-gold text-sm font-bold">87%</span>
+            <span className="text-amber text-sm font-bold">87%</span>
           </div>
 
-          <div className="bg-cyan text-navy-deep flex animate-pulse-glow items-center justify-center rounded-xl py-2.5 text-sm font-semibold">
+          <div className="from-coral to-flame flex animate-pulse-glow items-center justify-center rounded-xl bg-gradient-to-r py-2.5 text-sm font-semibold text-[#4A1B0C]">
             Ver disponibilidad →
           </div>
         </div>

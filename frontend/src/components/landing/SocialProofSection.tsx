@@ -24,7 +24,7 @@ function Counter({
   const current = useCountUp(value, active);
   return (
     <div className="text-center">
-      <p className="from-cyan to-blush bg-gradient-to-r bg-clip-text text-5xl font-extrabold text-transparent sm:text-6xl">
+      <p className="from-cyan to-flame bg-gradient-to-r bg-clip-text text-5xl font-extrabold text-transparent sm:text-6xl">
         {current}
         {suffix}
       </p>

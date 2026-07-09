@@ -50,7 +50,10 @@ export function HowItWorksSection() {
             Cómo funciona
           </span>
           <h2 className="text-cream mt-2 text-3xl font-bold sm:text-4xl">
-            Cuatro pasos hacia una cita real
+            Cuatro pasos hacia una{' '}
+            <span className="from-coral to-flame bg-gradient-to-r bg-clip-text text-transparent">
+              cita real
+            </span>
           </h2>
         </Reveal>
 

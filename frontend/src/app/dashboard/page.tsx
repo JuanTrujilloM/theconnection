@@ -53,7 +53,7 @@ function DashboardContent({ user }: { user: AuthUser }) {
           Bienvenido,{' '}
           <span className="text-cream font-medium">{user.email}</span>.
         </p>
-        <span className="border-cyan/30 bg-cyan/10 text-cyan mt-6 inline-block rounded-full border px-4 py-1.5 text-xs font-medium">
+        <span className="border-flame/30 bg-flame/10 text-flame mt-6 inline-block rounded-full border px-4 py-1.5 text-xs font-medium">
           Próximamente: tu match semanal
         </span>
       </div>

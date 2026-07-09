@@ -11,6 +11,7 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
 import { VenuesModule } from './modules/venues/venues.module';
 import { MatchesModule } from './modules/matches/matches.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
     VenuesModule,
     MatchesModule,
     ChatbotModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
