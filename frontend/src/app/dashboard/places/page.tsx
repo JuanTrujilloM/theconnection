@@ -57,7 +57,13 @@ function PlacesContent() {
   const selectedIds = chosen ?? serverSelected;
 
   const toggle = (id: string) => {
-    const next = selectedIds.includes(id)
+    const isSelected = selectedIds.includes(id);
+    // Exactly 2 allowed: block a 3rd so both users are forced to share one.
+    if (!isSelected && selectedIds.length >= MIN_VENUE_SELECTION) {
+      setFormError(`Solo puedes elegir ${MIN_VENUE_SELECTION} lugares.`);
+      return;
+    }
+    const next = isSelected
       ? selectedIds.filter((venueId) => venueId !== id)
       : [...selectedIds, id];
     setChosen(next);
@@ -65,8 +71,8 @@ function PlacesContent() {
   };
 
   const onConfirm = async () => {
-    if (selectedIds.length < MIN_VENUE_SELECTION) {
-      setFormError(`Selecciona al menos ${MIN_VENUE_SELECTION} lugares.`);
+    if (selectedIds.length !== MIN_VENUE_SELECTION) {
+      setFormError(`Selecciona ${MIN_VENUE_SELECTION} lugares.`);
       return;
     }
     try {
@@ -101,8 +107,8 @@ function PlacesContent() {
       <div className="mb-6">
         <h1 className="text-cream text-2xl font-bold">Elige sus lugares</h1>
         <p className="text-slate mt-1 text-sm">
-          Estas opciones combinan con sus intereses. Selecciona al menos{' '}
-          {MIN_VENUE_SELECTION} para continuar.
+          Estas opciones combinan con sus intereses. Elige {MIN_VENUE_SELECTION}{' '}
+          de las {suggestions.length} para continuar.
         </p>
       </div>
 
@@ -127,7 +133,7 @@ function PlacesContent() {
         >
           {select.isPending
             ? 'Guardando...'
-            : `Confirmar (${selectedIds.length}/${suggestions.length})`}
+            : `Confirmar (${selectedIds.length}/${MIN_VENUE_SELECTION})`}
         </Button>
       </div>
     </>
