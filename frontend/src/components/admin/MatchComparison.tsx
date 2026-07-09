@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Badge, UserStatusBadge } from '@/components/admin/StatusBadge';
-import { formatCOP, formatDate } from '@/lib/utils/format';
+import { formatCOP, formatDate, formatCalendarDate } from '@/lib/utils/format';
 import type {
   AdminMatchDetail,
   AdminUserDetail,
@@ -335,7 +335,7 @@ function AvailabilityList({
         <ul className="space-y-1">
           {slots.map((slot, index) => (
             <li key={index} className="text-cream text-xs">
-              {formatDate(slot.date)} · {slot.timeSlot}
+              {formatCalendarDate(slot.date)} · {slot.timeSlot}
             </li>
           ))}
         </ul>
