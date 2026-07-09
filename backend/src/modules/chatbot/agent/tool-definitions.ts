@@ -4,7 +4,8 @@
 export type ToolName =
   | 'get_match_details'
   | 'get_upcoming_date'
-  | 'get_app_help';
+  | 'get_app_help'
+  | 'reject_match';
 
 // Structurally compatible with LangChain's BindToolsInput (OpenAI tool format),
 // kept local so this file doesn't depend on LangChain's internal type paths.
@@ -50,6 +51,17 @@ export const TOOL_DEFINITIONS: ChatToolDefinition[] = [
       name: 'get_app_help',
       description:
         'Get help/FAQ about how TheConnection works. Call for app usage questions.',
+      parameters: NO_ARGS,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'reject_match',
+      description:
+        "Reject/decline the user's current weekly match. Call ONLY when the user " +
+        'clearly says they do NOT want this match (e.g. "no me interesa", ' +
+        '"rechazar", "no quiero seguir"). This ends the match for both users.',
       parameters: NO_ARGS,
     },
   },

@@ -32,7 +32,8 @@ export class GetMatchDetailsTool {
       : null;
     if (!match || !partner?.profile) return 'NO_ACTIVE_MATCH';
 
-    const hasConfirmedDate = match.date?.status === 'confirmed';
+    // A confirmed match only ever has a date, so its mere presence = scheduled.
+    const hasConfirmedDate = match.date !== null;
     return JSON.stringify({
       name: partner.profile.name,
       university: partner.profile.university,

@@ -4,6 +4,7 @@ import { AgentRunnerService } from './agent/agent-runner.service';
 import { GetAppHelpTool } from './agent/tools/get-app-help.tool';
 import { GetMatchDetailsTool } from './agent/tools/get-match-details.tool';
 import { GetUpcomingDateTool } from './agent/tools/get-upcoming-date.tool';
+import { RejectMatchTool } from './agent/tools/reject-match.tool';
 import { ConversationCacheService } from './memory/conversation-cache.service';
 import { ModerationService } from './moderation/moderation.service';
 import {
@@ -52,6 +53,7 @@ describe('ChatbotService', () => {
     noTool,
     noTool as unknown as GetUpcomingDateTool,
     noTool as unknown as GetAppHelpTool,
+    noTool as unknown as RejectMatchTool,
   );
 
   beforeEach(() => {

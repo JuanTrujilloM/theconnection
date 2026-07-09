@@ -5,6 +5,7 @@ import { buildSystemPrompt } from './agent/system-prompt';
 import { GetAppHelpTool } from './agent/tools/get-app-help.tool';
 import { GetMatchDetailsTool } from './agent/tools/get-match-details.tool';
 import { GetUpcomingDateTool } from './agent/tools/get-upcoming-date.tool';
+import { RejectMatchTool } from './agent/tools/reject-match.tool';
 import { ConversationCacheService } from './memory/conversation-cache.service';
 import { ModerationService } from './moderation/moderation.service';
 import { UserResolverService } from './user-context/user-resolver.service';
@@ -33,6 +34,7 @@ export class ChatbotService {
     private readonly matchTool: GetMatchDetailsTool,
     private readonly dateTool: GetUpcomingDateTool,
     private readonly helpTool: GetAppHelpTool,
+    private readonly rejectTool: RejectMatchTool,
   ) {}
 
   // Single entry point the WhatsApp transport calls. Returns the reply text to send.
@@ -83,6 +85,7 @@ export class ChatbotService {
       get_match_details: () => this.matchTool.run(userId),
       get_upcoming_date: () => this.dateTool.run(userId),
       get_app_help: () => Promise.resolve(this.helpTool.run()),
+      reject_match: () => this.rejectTool.run(userId),
     };
   }
 

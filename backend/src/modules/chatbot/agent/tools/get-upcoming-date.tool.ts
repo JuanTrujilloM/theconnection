@@ -21,13 +21,10 @@ export class GetUpcomingDateTool {
       },
     });
 
+    // A date exists and is in the future = scheduled. The date's status word
+    // doesn't gate this; the match query already limits to confirmed matches.
     const date = match?.date;
-    if (
-      !match ||
-      !date ||
-      date.status !== 'confirmed' ||
-      date.scheduledAt <= new Date()
-    ) {
+    if (!match || !date || date.scheduledAt <= new Date()) {
       return 'NO_DATE_SCHEDULED';
     }
 
