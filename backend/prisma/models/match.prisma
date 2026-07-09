@@ -4,13 +4,23 @@ model Match {
   userBId            String
   compatibilityScore Float
   status             String
+  // HU-08 scheduling: how many "add more availability" nudges were sent (capped),
+  // and the deadline after which a still-unscheduled match is recycled.
+  scheduleAttempts   Int       @default(0)
+  scheduleDeadline   DateTime?
+  // HU-07 response: who rejected the match and when (analytics). null rejectedById
+  // with rejectedAt set = rejected by the 48h no-response timeout. Acceptance is
+  // implicit (completing the availability + place flow), so it needs no column.
+  rejectedById       String?
+  rejectedAt         DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
   // Relations
   userA          User           @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Cascade)
   userB          User           @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Cascade)
-  date           Date?
-  venueOptions   VenueOption[]
-  availabilities Availability[]
+  date              Date?
+  venueOptions      VenueOption[]
+  availabilities    Availability[]
+  availabilityLinks AvailabilityLink[]
 }

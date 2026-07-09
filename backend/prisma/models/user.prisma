@@ -14,6 +14,7 @@ model User {
   matchesAsUserA      Match[]        @relation("MatchUserA")
   matchesAsUserB      Match[]        @relation("MatchUserB")
   availabilities      Availability[]
+  availabilityLinks   AvailabilityLink[]
   feedbacks           Feedback[]
   venueOptionsAsUserA VenueOption[]  @relation("VenueOptionUserA")
   venueOptionsAsUserB VenueOption[]  @relation("VenueOptionUserB")

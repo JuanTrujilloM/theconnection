@@ -1,0 +1,22 @@
+// Tokenized magic link a student opens from the first WhatsApp notification to
+// pick availability (HU-09) and then places (HU-06) without logging in. The flow
+// is public, so security rests on the token: high-entropy, stored only as a
+// sha256 hash (looked up by equality), single-use, and expiring.
+model AvailabilityLink {
+  id        String   @id @default(uuid())
+  matchId   String
+  userId    String
+  tokenHash String   @unique // sha256 of the opaque token — 256-bit, so a fast deterministic hash is safe and keeps lookups O(1)
+  // Which step the holder is on: AVAILABILITY -> VENUE. consumedAt closes the flow.
+  step       String    @default("AVAILABILITY")
+  expiresAt  DateTime
+  consumedAt DateTime? // set when place selection finishes; a consumed link reads as "already used"
+  createdAt  DateTime  @default(now())
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One active link per user per match; re-issuing replaces the previous row.
+  @@unique([matchId, userId])
+  @@index([userId])
+}

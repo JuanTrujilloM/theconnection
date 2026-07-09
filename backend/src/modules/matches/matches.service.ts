@@ -1,20 +1,25 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { VenuesService } from '../venues/venues.service';
 import { ACTIVE_MATCH_STATUSES } from '../chatbot/user-context/match-status';
 import { MIN_VENUE_SELECTION, SUGGESTION_COUNT } from './matches.constants';
+import { MatchConfirmationService } from './match-confirmation.service';
 
 type Venue = Awaited<ReturnType<VenuesService['findActive']>>[number];
 
 @Injectable()
 export class MatchesService {
+  private readonly logger = new Logger(MatchesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly venues: VenuesService,
+    private readonly confirmation: MatchConfirmationService,
   ) {}
 
   // Drives the dashboard: returns the active match (partner summary +
@@ -114,6 +119,17 @@ export class MatchesService {
         data: isUserA ? { userASelected: false } : { userBSelected: false },
       }),
     ]);
+
+    // HU-08: with places saved, try to schedule the date. No-op until the other
+    // user is also done. Isolated so a confirmation failure can't fail the save.
+    try {
+      await this.confirmation.tryConfirm(match.id);
+    } catch (error) {
+      this.logger.error(
+        `Confirmation check failed for match ${match.id}`,
+        error as Error,
+      );
+    }
 
     return { selectedVenueIds: select, venueSelectionPending: false };
   }

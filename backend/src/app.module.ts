@@ -10,6 +10,7 @@ import { ProfileModule } from './modules/profile/profile.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { VenuesModule } from './modules/venues/venues.module';
 import { MatchesModule } from './modules/matches/matches.module';
+import { AvailabilityModule } from './modules/availability/availability.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { AdminModule } from './modules/admin/admin.module';
 
@@ -24,6 +25,7 @@ import { AdminModule } from './modules/admin/admin.module';
     PreferencesModule,
     VenuesModule,
     MatchesModule,
+    AvailabilityModule,
     ChatbotModule,
     AdminModule,
   ],
