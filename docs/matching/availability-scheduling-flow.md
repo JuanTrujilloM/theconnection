@@ -6,8 +6,13 @@
 > coincidencia) y **HU-07** (aceptar/rechazar).
 >
 > El transporte real de WhatsApp (Meta Cloud API) **no** está construido. Mientras
-> tanto, todo lo saliente se **loguea en consola** (modo dev), igual que `MailService`
-> con los códigos de correo. Ver [WhatsApp: por qué va por consola](#whatsapp-dev-mode).
+> tanto, lo saliente por WhatsApp se **loguea en consola** (modo dev), igual que
+> `MailService` cuando SMTP no está configurado. Ver
+> [WhatsApp: por qué va por consola](#whatsapp-dev-mode).
+>
+> Cada notificación de este flujo también sale por **correo** (con SMTP real si está
+> configurado), vía `NotificationsService`. Ver
+> [email-notifications.md](../notifications/email-notifications.md).
 
 ---
 
