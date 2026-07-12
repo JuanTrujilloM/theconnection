@@ -62,13 +62,21 @@ function DashboardContent({ user }: { user: AuthUser }) {
         </Card>
       </div>
 
-      {/* Profile editing lives on its own, separate from the weekly-match flow. */}
+      {/* Profile and interests editing live on their own, separate from the
+          weekly-match flow. */}
       <div className="mt-6 flex flex-col items-center gap-3">
-        <Link href="/perfil">
-          <Button variant="secondary" className="px-5 py-2">
-            Editar perfil
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/perfil">
+            <Button variant="secondary" className="px-5 py-2">
+              👤 Perfil
+            </Button>
+          </Link>
+          <Link href="/intereses">
+            <Button variant="secondary" className="px-5 py-2">
+              ✨ Intereses
+            </Button>
+          </Link>
+        </div>
         {user.isAdmin && (
           <Link href="/admin/venues">
             <Button variant="ghost" className="px-5 py-2">

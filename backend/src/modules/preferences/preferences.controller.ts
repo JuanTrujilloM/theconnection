@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -9,6 +9,11 @@ import { CreatePreferencesDto } from './dto/create-preferences.dto';
 @UseGuards(JwtAuthGuard)
 export class PreferencesController {
   constructor(private readonly preferencesService: PreferencesService) {}
+
+  @Get('me')
+  getMine(@CurrentUser() user: AuthenticatedUser) {
+    return this.preferencesService.getByUserId(user.userId);
+  }
 
   @Post()
   create(

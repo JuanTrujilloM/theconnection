@@ -9,11 +9,29 @@ import { RelationshipCard } from './preferences/RelationshipCard';
 import { LookingForCard } from './preferences/LookingForCard';
 import { VibeCard } from './preferences/VibeCard';
 
-// HU-03 — interests & preferences step. Assembles the section cards; all state
-// logic lives in usePreferencesForm.
-export function PreferencesForm({ user }: { user: AuthUser }) {
-  const { form, onSubmit, isPending, bounds } = usePreferencesForm(user);
+// HU-03 — interests & preferences form. `edit` switches between onboarding
+// (create) and editing saved preferences. All state logic lives in
+// usePreferencesForm.
+export function PreferencesForm({
+  user,
+  edit = false,
+}: {
+  user: AuthUser;
+  edit?: boolean;
+}) {
+  const { form, onSubmit, isPending, isLoadingPreferences, bounds } =
+    usePreferencesForm(user, edit);
   const rootError = form.formState.errors.root?.message;
+
+  if (edit && isLoadingPreferences) {
+    return (
+      <p className="text-slate animate-pulse text-sm">
+        Cargando tus intereses...
+      </p>
+    );
+  }
+
+  const label = edit ? 'Guardar cambios' : 'Listo, quiero mi match ✓';
 
   return (
     <form onSubmit={onSubmit} className="space-y-6 pb-28 sm:pb-6" noValidate>
@@ -29,7 +47,7 @@ export function PreferencesForm({ user }: { user: AuthUser }) {
       <div className="border-white/10 bg-navy-deep/90 fixed inset-x-0 bottom-0 border-t p-4 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
         <div className="mx-auto flex max-w-2xl justify-end sm:max-w-none">
           <Button type="submit" className="w-full sm:w-auto" disabled={isPending}>
-            {isPending ? 'Guardando...' : 'Listo, quiero mi match ✓'}
+            {isPending ? 'Guardando...' : label}
           </Button>
         </div>
       </div>
