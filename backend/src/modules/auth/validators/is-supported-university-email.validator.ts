@@ -8,9 +8,7 @@ import { isSupportedUniversityEmail } from '../constants/university-domains';
 
 // Custom validator to check if an email belongs to a supported university domain.
 @ValidatorConstraint({ name: 'isSupportedUniversityEmail', async: false })
-export class IsSupportedUniversityEmailConstraint
-  implements ValidatorConstraintInterface
-{
+export class IsSupportedUniversityEmailConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
     return typeof value === 'string' && isSupportedUniversityEmail(value);
   }

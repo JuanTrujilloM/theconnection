@@ -14,4 +14,8 @@ model VenueOption {
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
   userA User  @relation("VenueOptionUserA", fields: [userAId], references: [id], onDelete: Cascade)
   userB User  @relation("VenueOptionUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  // One suggestion row per venue per match; backs skipDuplicates in getVenueSuggestions
+  // so concurrent first calls can't create a duplicate set.
+  @@unique([matchId, venueId])
 }

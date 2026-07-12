@@ -12,8 +12,8 @@ export interface SlotSelection {
   timeSlot: string;
 }
 
-// GET /availability/:token. A VENUE step means availability is already saved,
-// so the page forwards to place selection.
+// GET /availability/:token. A VENUE step means places are not chosen yet, so
+// the page forwards to that step first. COMPLETED = the link was consumed.
 export type AvailabilityView =
   | {
       step: 'AVAILABILITY';
@@ -21,10 +21,11 @@ export type AvailabilityView =
       days: CalendarDay[];
       timeSlots: string[];
     }
-  | { step: 'VENUE' };
+  | { step: 'VENUE' }
+  | { step: 'COMPLETED' };
 
-// GET /availability/:token/venues. An AVAILABILITY step means the user hasn't
-// submitted slots yet, so the page forwards back a step.
+// GET /availability/:token/venues — step 1 of the flow. An AVAILABILITY step
+// means places are already chosen, so the page forwards to time selection.
 export type TokenVenuesView =
   | {
       step: 'VENUE';
@@ -32,4 +33,5 @@ export type TokenVenuesView =
       minSelection: number;
       venues: VenueSuggestion[];
     }
-  | { step: 'AVAILABILITY' };
+  | { step: 'AVAILABILITY' }
+  | { step: 'COMPLETED' };

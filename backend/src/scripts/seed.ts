@@ -1283,7 +1283,9 @@ function logSummary(seededMatches: boolean): void {
     console.log('To generate matches + availability links (HU-09):');
     console.log('  node dist/src/scripts/run-weekly-matching.js');
     console.log('  (links are logged by WhatsappNotifierService in dev mode)');
-    console.log('Or seed the demo matches too: SEED_MATCHES=true npm run db:seed');
+    console.log(
+      'Or seed the demo matches too: SEED_MATCHES=true npm run db:seed',
+    );
     console.log('');
   }
   console.log('Primary test login: valentina.rios@eafit.edu.co');

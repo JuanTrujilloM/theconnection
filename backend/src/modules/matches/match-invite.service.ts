@@ -78,7 +78,8 @@ export class MatchInviteService {
     partner: InviteUser,
   ): Promise<InviteResult> {
     const token = await this.links.issueForMatchUser(matchId, user.id);
-    const url = `${this.frontendUrl()}/availability/${token}`;
+    // Entry point is place selection (HU-06); time selection (HU-09) follows.
+    const url = `${this.frontendUrl()}/flow/${token}/places`;
     await this.notifier.sendAvailabilityInvite({
       cellphone: user.cellphone,
       partnerName: partner.profile?.name ?? 'tu match',

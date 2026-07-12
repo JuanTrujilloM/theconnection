@@ -14,26 +14,30 @@
 ## 1. Panorama
 
 ```
-Domingo 7pm (cron) → se crean los Match
+Jueves 7pm (cron) → se crean los Match
         │
         ▼
 Se emite 1 link tokenizado por usuario  →  "WhatsApp" (dev: log en consola)
         │
         ▼   (el usuario abre el link, SIN login)
-HU-09 Disponibilidad → HU-06 Lugares        [flujo público, mismo token]
+HU-06 Lugares → HU-09 Disponibilidad        [flujo público, mismo token]
         │
         ▼   (cuando el 2º usuario termina)
 HU-08 tryConfirm: ¿coinciden horario + lugar?
         ├── Sí  → crea Date (status accepted), Match pasa a confirmed, avisa a ambos
-        └── No  → 1 empujón para agregar disponibilidad → si sigue sin cruce, recicla
+        └── No  → 1 empujón para agregar disponibilidad (solo horarios; los
+                  lugares elegidos se conservan) → si sigue sin cruce, recicla
 
 HU-07 (en paralelo, por el chatbot):
         ├── "no me interesa" → reject_match → Match rejected, se borra la Date, recicla
         └── 48h sin respuesta → timeout → Match rejected (por sistema)
 ```
 
-**Aceptación = implícita**: completar disponibilidad + lugares *es* aceptar. Solo el
+**Aceptación = implícita**: completar lugares + disponibilidad *es* aceptar. Solo el
 **rechazo** y el **timeout** se manejan explícitamente.
+
+> Detalle de la selección de lugares (generación de las 3 opciones, regla "2 de 3",
+> por qué ambos ven los mismos lugares): [venue-selection-flow.md](./venue-selection-flow.md).
 
 ---
 
@@ -54,9 +58,13 @@ HU-07 (en paralelo, por el chatbot):
 **`AvailabilityLink`** (nuevo) — el "magic link" público:
 
 ```
-id, matchId, userId, tokenHash (sha256 @unique), step ('AVAILABILITY'|'VENUE'),
+id, matchId, userId, tokenHash (sha256 @unique), step ('VENUE'|'AVAILABILITY'),
 expiresAt, consumedAt?, createdAt   @@unique([matchId, userId])
 ```
+
+El `step` arranca en `VENUE` (lugares primero), pasa a `AVAILABILITY` al guardar
+los lugares y el link se consume al guardar los horarios. Los links del empujón
+se emiten directamente en `AVAILABILITY`.
 
 **`Match`** (columnas nuevas):
 
@@ -86,18 +94,22 @@ rejectedAt       DateTime?         // HU-07: cuándo (analítica, AC6)
 
 ## 4. Flujo público por token (HU-09 + HU-06)
 
-Rutas **públicas** (sin `JwtAuthGuard`) — el token en la URL es la credencial:
+Rutas **públicas** (sin `JwtAuthGuard`) — el token en la URL es la credencial.
+La URL de entrada del link es `/flow/:token/places` (lugares primero):
 
 | Método | Ruta | Qué hace |
 |---|---|---|
-| `GET`  | `/availability/:token` | Valida y devuelve el calendario (7 días, slots 12pm–7pm). Si el paso es `VENUE`, señaliza redirigir a lugares |
-| `POST` | `/availability/:token` | Valida (≥1 slot, dentro de la ventana), guarda `Availability`, avanza a `VENUE` |
-| `GET`  | `/availability/:token/venues` | Sugerencias de lugares (reusa `MatchesService`) |
-| `POST` | `/availability/:token/venues` | Guarda la selección (exactamente 2 de 3), consume el link, dispara `tryConfirm` |
+| `GET`  | `/availability/:token/venues` | **Paso 1.** Sugerencias de lugares (reusa `MatchesService`). Si el paso ya es `AVAILABILITY`, señaliza redirigir a horarios; consumido → `COMPLETED` |
+| `POST` | `/availability/:token/venues` | Guarda la selección (exactamente 2 de 3), avanza el link a `AVAILABILITY` |
+| `GET`  | `/availability/:token` | **Paso 2.** Valida y devuelve el calendario (7 días, slots 12pm–7pm). Si el paso es `VENUE`, señaliza volver a lugares; consumido → `COMPLETED` |
+| `POST` | `/availability/:token` | Valida (≥1 slot, dentro de la ventana), guarda `Availability`, **consume el link**, dispara `tryConfirm` |
 
 Frontend (fuera de `AuthGate`):
-- `app/availability/[token]/page.tsx` — calendario seleccionable + estados de error / link inválido.
-- `app/flow/[token]/places/page.tsx` — selección de lugares (reusa `VenueCard`).
+- `app/flow/[token]/places/page.tsx` — **entrada del flujo**: selección de lugares (reusa `VenueCard`).
+- `app/availability/[token]/page.tsx` — paso final: calendario + pantalla "¡Listo!" / estados de error.
+
+Re-abrir un link consumido muestra una pantalla amable de completado (los `GET`
+devuelven `{ step: 'COMPLETED' }`); los `POST` responden 410.
 
 **Regla "2 de 3"**: cada usuario elige **exactamente 2** de las 3 opciones. Dos
 subconjuntos de 2 en un set de 3 siempre se cruzan → siempre hay un lugar en común
@@ -107,8 +119,9 @@ subconjuntos de 2 en un set de 3 siempre se cruzan → siempre hay un lugar en c
 
 ## 5. Confirmación (HU-08)
 
-`MatchConfirmationService.tryConfirm(matchId)` se llama al final de `selectVenues`.
-Es idempotente y no hace nada hasta que **ambos** completaron el flujo.
+`MatchConfirmationService.tryConfirm(matchId)` se llama al final de
+`submitAvailability` (el último paso del flujo). Es idempotente y no hace nada
+hasta que **ambos** completaron el flujo.
 
 ```
 1. Si ya hay Date → salir.  Si el match no está activo → salir.
@@ -120,7 +133,9 @@ Es idempotente y no hace nada hasta que **ambos** completaron el flujo.
       avisa a ambos con día/hora/lugar
    No hay coincidencia de horario:
       - Si ya se empujó (scheduleAttempts ≥ 1) → recicla (Match → expired, avisa)
-      - Si no → empuja: reabre disponibilidad (link nuevo), scheduleDeadline = +24h, avisa
+      - Si no → empuja: reabre disponibilidad (link nuevo emitido en paso
+        AVAILABILITY: los lugares elegidos se conservan y NO se repiten),
+        scheduleDeadline = +24h, avisa
 ```
 
 - `scheduledAt` = día (`@db.Date`, UTC-midnight) + hora del slot → UTC usando el offset
@@ -197,9 +212,9 @@ node dist/src/scripts/run-weekly-matching.js   # crea matches + loguea 2 links p
 Copia **los 2 links de un mismo match** (aparecen juntos por celular en el log).
 
 ### Caso feliz — Date `accepted` + Match `confirmed`
-1. Abre el link del usuario A → elige una franja (ej. `mié 8 · 13:00`) → continuar.
-2. Elige 2 lugares → confirmar.
-3. Repite con el link del usuario B usando **la misma franja** y 2 lugares.
+1. Abre el link del usuario A → **primero los lugares**: elige 2 → confirmar.
+2. Pasa al calendario → elige una franja (ej. `mié 8 · 13:00`) → continuar → "¡Listo!".
+3. Repite con el link del usuario B usando 2 lugares y **la misma franja**.
 4. Al terminar B: en consola aparece `[dev whatsapp] ... ¡Coincidieron! ...`.
 5. Verifica en `npx prisma studio`: la `Date` queda `status = accepted` y el `Match`
    `status = confirmed`.
@@ -207,7 +222,9 @@ Copia **los 2 links de un mismo match** (aparecen juntos por celular en el log).
 ### Sin coincidencia de horario — empujón
 - Igual que arriba pero con **franjas distintas** (A: 13:00, B: 15:00). Al terminar B:
   consola `... no coincidieron ... agrega más ...` + **un link nuevo por usuario**.
-- Abre esos links nuevos, vuelve a elegir franjas distintas → segundo fallo → consola
+- Los links nuevos abren **directo el calendario** (los lugares ya elegidos se
+  conservan; el paso de lugares no se repite).
+- Vuelve a elegir franjas distintas → segundo fallo → consola
   `... no logramos coordinar ...` y el `Match` queda `expired`.
 
 ### Rechazo por chatbot (HU-07)

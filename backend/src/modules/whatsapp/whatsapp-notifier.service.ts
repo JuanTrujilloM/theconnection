@@ -30,12 +30,13 @@ export class WhatsappNotifierService {
     this.devMode = !this.config.get<string>('WHATSAPP_TOKEN');
   }
 
-  // First notification (HU-05): who the match is + link to pick availability.
+  // First notification (HU-05): who the match is + link to the flow (places
+  // first, then availability).
   sendAvailabilityInvite(invite: MatchInvite): Promise<void> {
     return this.send(
       invite.cellphone,
       `¡Tenemos tu match de la semana con ${invite.partnerName}! 🎉 ` +
-        `Marca tus horarios disponibles aquí: ${invite.availabilityUrl}`,
+        `Elige los lugares y tus horarios aquí: ${invite.availabilityUrl}`,
     );
   }
 

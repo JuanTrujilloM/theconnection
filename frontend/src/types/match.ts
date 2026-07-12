@@ -11,6 +11,4 @@ export interface CurrentMatch {
   id: string;
   status: string;
   partner: MatchPartner | null;
-  // True while this user still owes a venue selection; drives the dashboard redirect.
-  venueSelectionPending: boolean;
 }

@@ -54,8 +54,8 @@ export class MatchConfirmationService {
     private readonly notifier: WhatsappNotifierService,
   ) {}
 
-  // Called after a user finishes place selection. A no-op until both sides are
-  // complete; safe to call repeatedly.
+  // Called after a user finishes the flow (availability submission, the last
+  // step). A no-op until both sides are complete; safe to call repeatedly.
   async tryConfirm(matchId: string): Promise<ConfirmResult> {
     const match = await this.loadMatch(matchId);
     if (!match) return 'waiting';
@@ -153,12 +153,17 @@ export class MatchConfirmationService {
       },
     });
 
-    // Re-open availability for both: a fresh AVAILABILITY-step link each.
+    // Re-open availability only: the fresh link starts at AVAILABILITY, so the
+    // already-saved venue picks are kept and the venue step is skipped.
     for (const [user, partner] of [
       [match.userA, match.userB],
       [match.userB, match.userA],
     ] as const) {
-      const token = await this.links.issueForMatchUser(match.id, user.id);
+      const token = await this.links.issueForMatchUser(
+        match.id,
+        user.id,
+        'AVAILABILITY',
+      );
       await this.notifier.sendMoreAvailabilityRequest({
         cellphone: user.cellphone,
         partnerName: nameOf(partner),

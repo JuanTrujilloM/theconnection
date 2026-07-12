@@ -2,10 +2,12 @@ import {
   BadRequestException,
   GoneException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { MatchesService } from '../matches/matches.service';
+import { MatchConfirmationService } from '../matches/match-confirmation.service';
 import { MIN_VENUE_SELECTION } from '../matches/matches.constants';
 import {
   AvailabilityLinkService,
@@ -32,18 +34,22 @@ const MONTHS = [
 
 @Injectable()
 export class AvailabilityService {
+  private readonly logger = new Logger(AvailabilityService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly links: AvailabilityLinkService,
     private readonly matches: MatchesService,
+    private readonly confirmation: MatchConfirmationService,
   ) {}
 
-  // State: calendar / places / venues -> selection / feedback.
+  // Flow order: places (VENUE) first, then time (AVAILABILITY), then consumed.
 
-  // Drives the public availability page. A VENUE-step link means this user has
-  // already submitted, so the frontend forwards to place selection.
+  // Drives the public availability page (step 2 of the flow). A VENUE-step link
+  // means places are not chosen yet, so the frontend forwards to that step first.
   async getAvailabilityView(token: string) {
-    const link = await this.resolveOrThrow(token);
+    const link = await this.resolveForView(token);
+    if (!link) return { step: 'COMPLETED' as const };
     if (link.step === 'VENUE') {
       return { step: 'VENUE' as const };
     }
@@ -55,34 +61,46 @@ export class AvailabilityService {
     };
   }
 
-  // Saves this user's slots and advances the link to place selection (HU-06).
+  // Saves this user's slots — the LAST step: consumes the link and triggers the
+  // HU-08 confirmation check.
   async submitAvailability(token: string, slots: SlotSelectionDto[]) {
     const link = await this.resolveOrThrow(token);
-    // A VENUE-step link was already submitted; block a second write (AC #5).
     if (link.step !== 'AVAILABILITY') {
-      throw new GoneException('Este enlace ya fue usado.');
+      throw new BadRequestException('Primero elige tus lugares.');
     }
 
     const rows = this.validateSlots(link, slots);
 
-    // Delete-then-insert + advance the step must be atomic: a crash mid-way
-    // must not leave partial slots with the link still on the availability step.
+    // Delete-then-insert atomically: a crash mid-way must not leave partial slots.
     await this.prisma.$transaction([
       this.prisma.availability.deleteMany({
         where: { matchId: link.matchId, userId: link.userId },
       }),
       this.prisma.availability.createMany({ data: rows }),
     ]);
-    await this.links.advanceToVenue(link.id);
+    await this.links.consume(link.id);
 
-    return { step: 'VENUE' as const };
+    // HU-08: flow complete for this user; try to schedule the date. No-op until
+    // the other user is also done. Isolated so a confirmation failure can't
+    // fail the save.
+    try {
+      await this.confirmation.tryConfirm(link.matchId);
+    } catch (error) {
+      this.logger.error(
+        `Confirmation check failed for match ${link.matchId}`,
+        error as Error,
+      );
+    }
+
+    return { step: 'COMPLETED' as const };
   }
 
-  // Drives the public place-selection page (HU-06) for the same token.
+  // Drives the public place-selection page (HU-06) — step 1 of the flow.
   async getVenuesView(token: string) {
-    const link = await this.resolveOrThrow(token);
+    const link = await this.resolveForView(token);
+    if (!link) return { step: 'COMPLETED' as const };
     if (link.step !== 'VENUE') {
-      // Availability not submitted yet; frontend sends them back a step.
+      // Places already chosen; frontend forwards to the availability step.
       return { step: 'AVAILABILITY' as const };
     }
     return {
@@ -93,15 +111,15 @@ export class AvailabilityService {
     };
   }
 
-  // Records place choices (reusing HU-06 logic) and closes the link.
+  // Records place choices (reusing HU-06 logic) and advances to time selection.
   async selectVenues(token: string, venueIds: string[]) {
     const link = await this.resolveOrThrow(token);
     if (link.step !== 'VENUE') {
-      throw new BadRequestException('Primero elige tus horarios disponibles.');
+      throw new GoneException('Ya elegiste tus lugares.');
     }
     const result = await this.matches.selectVenues(link.userId, venueIds);
-    await this.links.consume(link.id);
-    return { step: 'COMPLETED' as const, ...result };
+    await this.links.setStep(link.id, 'AVAILABILITY');
+    return { step: 'AVAILABILITY' as const, ...result };
   }
 
   // Maps the link result-enum to HTTP so every reason lands on the "invalid
@@ -115,6 +133,23 @@ export class AvailabilityService {
         throw new GoneException('Este enlace ya expiró.');
       case 'consumed':
         throw new GoneException('Este enlace ya fue usado.');
+      default:
+        throw new NotFoundException('Este enlace no es válido.');
+    }
+  }
+
+  // GET views treat a consumed link as "flow completed" (null) so re-opening a
+  // finished link shows a friendly done screen instead of an error. Writes keep
+  // going through resolveOrThrow, where consumed is a hard 410.
+  private async resolveForView(token: string): Promise<ValidatedLink | null> {
+    const result = await this.links.validate(token);
+    switch (result.status) {
+      case 'ok':
+        return result.link;
+      case 'consumed':
+        return null;
+      case 'expired':
+        throw new GoneException('Este enlace ya expiró.');
       default:
         throw new NotFoundException('Este enlace no es válido.');
     }
