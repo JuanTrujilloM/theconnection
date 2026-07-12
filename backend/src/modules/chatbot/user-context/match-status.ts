@@ -19,6 +19,10 @@ export function matchStatusLabel(
       return 'Cita realizada';
     case 'canceled':
       return 'Cancelado';
+    case 'rejected':
+      return 'Rechazado';
+    case 'expired':
+      return 'No agendado a tiempo';
     default:
       return status;
   }

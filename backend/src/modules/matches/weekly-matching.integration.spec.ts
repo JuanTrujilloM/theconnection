@@ -1,6 +1,8 @@
 import { PrismaService } from '../../config/prisma.service';
 import { VenuesService } from '../venues/venues.service';
 import { MatchesService } from './matches.service';
+import { MatchInviteService } from './match-invite.service';
+import { MatchConfirmationService } from './match-confirmation.service';
 import { WeeklyMatchingService } from './weekly-matching.service';
 
 // Integration seam: the venue flow is pull-based off the Match row (see
@@ -161,10 +163,19 @@ function makeStore() {
 describe('weekly matching → venue selection integration', () => {
   it('generates a match that then drives venue suggestions', async () => {
     const { prisma, matches } = makeStore();
-    const weekly = new WeeklyMatchingService(prisma);
+    // runWeeklyMatching is pure of notifications, so a no-op invite stub is enough.
+    const invites = {
+      inviteForPairs: () => Promise.resolve(),
+    } as unknown as MatchInviteService;
+    const weekly = new WeeklyMatchingService(prisma, invites);
+    // getVenueSuggestions doesn't touch confirmation, so a no-op stub suffices.
+    const confirmation = {
+      tryConfirm: () => Promise.resolve('waiting'),
+    } as unknown as MatchConfirmationService;
     const matchesService = new MatchesService(
       prisma,
       new VenuesService(prisma),
+      confirmation,
     );
 
     // 1. Weekly matcher creates exactly one pending Match row.

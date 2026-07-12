@@ -1,7 +1,7 @@
-// Weekly matching runs Sunday 19:00 Colombia time (HU-04). Colombia has no DST,
+// Weekly matching runs Thursday 19:00 Colombia time (HU-04). Colombia has no DST,
 // so America/Bogota is a stable UTC-5; the timeZone option keeps it correct even
-// if the container clock is UTC. Day 0 = Sunday in cron.
-export const WEEKLY_MATCHING_CRON = '0 19 * * 0';
+// if the container clock is UTC. Day 4 = Thursday in cron.
+export const WEEKLY_MATCHING_CRON = '0 19 * * 4';
 export const WEEKLY_MATCHING_TIMEZONE = 'America/Bogota';
 
 // Status stamped on generated matches. Mirrors the vocabulary the consumers read

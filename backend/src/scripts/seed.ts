@@ -1070,8 +1070,15 @@ async function main(): Promise<void> {
     const hobbyIds = await seedHobbies(prisma);
     await seedVenues(prisma);
     const profileIds = await seedStudents(prisma, hobbyIds);
-    await seedMatches(prisma, profileIds);
-    logSummary();
+    // Matches are opt-in. Default: leave the pool unmatched so the weekly matcher
+    // (and the HU-09 availability links it fires) can be tested end to end. Set
+    // SEED_MATCHES=true to also load the demo matches/reports the admin and
+    // chatbot views rely on.
+    const seedMatchScenarios = process.env.SEED_MATCHES === 'true';
+    if (seedMatchScenarios) {
+      await seedMatches(prisma, profileIds);
+    }
+    logSummary(seedMatchScenarios);
   } finally {
     await prisma.$disconnect();
   }
@@ -1261,13 +1268,24 @@ async function seedMatches(
   });
 }
 
-function logSummary(): void {
+function logSummary(seededMatches: boolean): void {
   console.log('Seed complete:');
   console.log(`  ${STUDENTS.length} students (verified, full profiles)`);
   console.log(`  ${VENUES.length} venues (Medellín + Bogotá)`);
   console.log(`  ${Object.keys(HOBBY_CATALOG).length} hobbies`);
-  console.log(`  ${MATCHES.length} matches across statuses + 2 reports`);
+  console.log(
+    seededMatches
+      ? `  ${MATCHES.length} matches across statuses + 2 reports`
+      : '  0 matches (pool left unmatched — run the weekly matcher to create them)',
+  );
   console.log('');
+  if (!seededMatches) {
+    console.log('To generate matches + availability links (HU-09):');
+    console.log('  node dist/src/scripts/run-weekly-matching.js');
+    console.log('  (links are logged by WhatsappNotifierService in dev mode)');
+    console.log('Or seed the demo matches too: SEED_MATCHES=true npm run db:seed');
+    console.log('');
+  }
   console.log('Primary test login: valentina.rios@eafit.edu.co');
   console.log('  1) POST /auth/login { email } → code is logged to the server');
   console.log('     console ([dev mail] ...) when SMTP is not configured.');

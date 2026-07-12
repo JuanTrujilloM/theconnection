@@ -9,6 +9,7 @@ import {
 } from './weekly-matching.constants';
 import { stableMatch } from './engine/stable-matching';
 import { MatchCandidate, MatchPair } from './engine/types';
+import { MatchInviteService } from './match-invite.service';
 
 // Spanish + generic stop words dropped from biographies so the overlap signal
 // keys on meaningful words, not filler.
@@ -39,16 +40,23 @@ const BIO_STOP_WORDS = new Set([
 export class WeeklyMatchingService {
   private readonly logger = new Logger(WeeklyMatchingService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly invites: MatchInviteService,
+  ) {}
 
-  // HU-04: the weekly cron. Colombia has no DST so America/Bogota is stable.
+  // HU-04 + HU-05: the weekly cron matches, then fires the first WhatsApp
+  // notification (tokenized availability link) for each new pair. Colombia has
+  // no DST so America/Bogota is stable.
   @Cron(WEEKLY_MATCHING_CRON, { timeZone: WEEKLY_MATCHING_TIMEZONE })
   async handleWeeklyCron(): Promise<void> {
     const created = await this.runWeeklyMatching();
     this.logger.log(`Weekly matching created ${created.length} match(es).`);
+    await this.invites.inviteForPairs(created);
   }
 
-  // Load pool -> run pure engine -> persist. Public so ops/tests can invoke it
+  // Load pool -> run pure engine -> persist. Pure of notifications so a match is
+  // never rolled back by a failed send. Public so ops/tests can invoke it
   // without waiting for the scheduler. Returns the created pairs.
   async runWeeklyMatching(): Promise<MatchPair[]> {
     const candidates = await this.loadCandidates();
