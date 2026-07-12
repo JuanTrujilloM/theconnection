@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../config/prisma.service';
 import { AvailabilityLinkService } from '../availability-link/availability-link.service';
-import { WhatsappNotifierService } from '../whatsapp/whatsapp-notifier.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { buildPartnerSummary } from '../notifications/notification-payloads';
 import { MatchPair } from './engine/types';
 
 export interface InviteResult {
@@ -11,8 +12,8 @@ export interface InviteResult {
   url: string;
 }
 
-// Match with the fields the invite needs: each user's cellphone (WhatsApp) and
-// the partner's display name.
+// Match with the fields the invite needs: each user's contact info and the
+// partner's card data (name, age, university, photo) for the email.
 type MatchWithUsers = {
   id: string;
   userAId: string;
@@ -22,13 +23,20 @@ type MatchWithUsers = {
 };
 type InviteUser = {
   id: string;
+  email: string;
   cellphone: string;
-  profile: { name: string } | null;
+  profile: {
+    name: string;
+    dateOfBirth: Date;
+    university: string;
+    major: string;
+    photos: { url: string; isPrimary: boolean }[];
+  } | null;
 };
 
-// HU-05: turns a freshly generated match into the first WhatsApp notification —
-// a tokenized availability link per user. Separate from the matching engine so
-// a notification failure never rolls back a match that was already persisted.
+// HU-05: turns a freshly generated match into the first notification (WhatsApp
+// + email) — a tokenized availability link per user. Separate from the matching
+// engine so a notification failure never rolls back a match that was persisted.
 @Injectable()
 export class MatchInviteService {
   private readonly logger = new Logger(MatchInviteService.name);
@@ -37,7 +45,7 @@ export class MatchInviteService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly links: AvailabilityLinkService,
-    private readonly notifier: WhatsappNotifierService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // Cron path: invite both users of every pair created this cycle.
@@ -80,10 +88,16 @@ export class MatchInviteService {
     const token = await this.links.issueForMatchUser(matchId, user.id);
     // Entry point is place selection (HU-06); time selection (HU-09) follows.
     const url = `${this.frontendUrl()}/flow/${token}/places`;
-    await this.notifier.sendAvailabilityInvite({
-      cellphone: user.cellphone,
-      partnerName: partner.profile?.name ?? 'tu match',
+    await this.notifications.notifyMatchInvite({
+      recipient: {
+        name: user.profile?.name ?? '',
+        email: user.email,
+        cellphone: user.cellphone,
+      },
+      partner: buildPartnerSummary(partner.profile),
       availabilityUrl: url,
+      // Days derived from the same TTL that expires the token.
+      expiresInDays: Math.ceil(this.links.ttlHours() / 24),
     });
     return { userId: user.id, cellphone: user.cellphone, url };
   }
@@ -116,8 +130,17 @@ export class MatchInviteService {
     return {
       select: {
         id: true,
+        email: true,
         cellphone: true,
-        profile: { select: { name: true } },
+        profile: {
+          select: {
+            name: true,
+            dateOfBirth: true,
+            university: true,
+            major: true,
+            photos: { select: { url: true, isPrimary: true } },
+          },
+        },
       },
     };
   }

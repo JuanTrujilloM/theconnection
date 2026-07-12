@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { VenuesModule } from '../venues/venues.module';
 import { AvailabilityLinkModule } from '../availability-link/availability-link.module';
-import { WhatsappModule } from '../whatsapp/whatsapp.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
 import { MatchInviteService } from './match-invite.service';
@@ -15,7 +15,7 @@ import { WeeklyMatchingService } from './weekly-matching.service';
     ScheduleModule.forRoot(),
     VenuesModule,
     AvailabilityLinkModule,
-    WhatsappModule,
+    NotificationsModule,
   ],
   controllers: [MatchesController],
   providers: [

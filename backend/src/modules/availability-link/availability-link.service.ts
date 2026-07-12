@@ -96,11 +96,15 @@ export class AvailabilityLinkService {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  private computeExpiry(): Date {
-    const hours = Number(
+  // Public so notifications can state the real expiry ("expires in N days").
+  ttlHours(): number {
+    return Number(
       this.config.get<string>('AVAILABILITY_LINK_TTL_HOURS') ??
         DEFAULT_TTL_HOURS,
     );
-    return new Date(Date.now() + hours * 60 * 60 * 1000);
+  }
+
+  private computeExpiry(): Date {
+    return new Date(Date.now() + this.ttlHours() * 60 * 60 * 1000);
   }
 }

@@ -36,7 +36,7 @@ export class MailService implements OnModuleInit {
   }
 
   async sendVerificationCode(email: string, code: string): Promise<void> {
-    // Dev shortcut: log the code so you can verify locally without an inbox.
+    // Dev shortcut: log the code itself so you can verify locally without an inbox.
     if (this.devMode) {
       this.logger.warn(
         `[dev mail] verification code for ${email}: ${code} (SMTP not configured)`,
@@ -44,12 +44,26 @@ export class MailService implements OnModuleInit {
       return;
     }
 
-    const { subject, html } = verificationCodeEmail(code);
+    await this.send(email, verificationCodeEmail(code));
+  }
+
+  // Generic transactional send; templates author { subject, html }.
+  async send(
+    to: string,
+    content: { subject: string; html: string },
+  ): Promise<void> {
+    if (this.devMode) {
+      this.logger.warn(
+        `[dev mail] to ${to}: "${content.subject}" (SMTP not configured)`,
+      );
+      return;
+    }
+
     await this.transporter.sendMail({
       from: this.from,
-      to: email,
-      subject,
-      html,
+      to,
+      subject: content.subject,
+      html: content.html,
     });
   }
 }

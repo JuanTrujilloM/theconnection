@@ -3,7 +3,8 @@ import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../config/prisma.service';
 import { AvailabilityLinkService } from '../availability-link/availability-link.service';
-import { WhatsappNotifierService } from '../whatsapp/whatsapp-notifier.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { Recipient } from '../notifications/notification-payloads';
 import { ACTIVE_MATCH_STATUSES } from '../chatbot/user-context/match-status';
 import { MIN_VENUE_SELECTION } from './matches.constants';
 import {
@@ -51,7 +52,7 @@ export class MatchConfirmationService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly links: AvailabilityLinkService,
-    private readonly notifier: WhatsappNotifierService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // Called after a user finishes the flow (availability submission, the last
@@ -118,20 +119,22 @@ export class MatchConfirmationService {
       return 'already_scheduled';
     }
 
-    const venueName = this.venueNameById(match, venueId);
+    const venue = this.venueById(match, venueId);
     const whenText = slot.label;
     await Promise.all([
-      this.notifier.sendDateProposal({
-        cellphone: match.userA.cellphone,
+      this.notifications.notifyDateProposal({
+        recipient: recipientOf(match.userA),
         partnerName: nameOf(match.userB),
         whenText,
-        venueName,
+        venueName: venue.name,
+        venueAddress: venue.address,
       }),
-      this.notifier.sendDateProposal({
-        cellphone: match.userB.cellphone,
+      this.notifications.notifyDateProposal({
+        recipient: recipientOf(match.userB),
         partnerName: nameOf(match.userA),
         whenText,
-        venueName,
+        venueName: venue.name,
+        venueAddress: venue.address,
       }),
     ]);
     return 'confirmed';
@@ -164,8 +167,8 @@ export class MatchConfirmationService {
         user.id,
         'AVAILABILITY',
       );
-      await this.notifier.sendMoreAvailabilityRequest({
-        cellphone: user.cellphone,
+      await this.notifications.notifyMoreAvailabilityRequest({
+        recipient: recipientOf(user),
         partnerName: nameOf(partner),
         availabilityUrl: `${this.frontendUrl()}/availability/${token}`,
       });
@@ -179,8 +182,8 @@ export class MatchConfirmationService {
       data: { status: EXPIRED_MATCH_STATUS },
     });
     await Promise.all([
-      this.notifier.sendReschedulingFailed(match.userA.cellphone),
-      this.notifier.sendReschedulingFailed(match.userB.cellphone),
+      this.notifications.notifyReschedulingFailed(recipientOf(match.userA)),
+      this.notifications.notifyReschedulingFailed(recipientOf(match.userB)),
     ]);
     return 'recycled';
   }
@@ -228,9 +231,16 @@ export class MatchConfirmationService {
     return shared?.venueId ?? null;
   }
 
-  private venueNameById(match: LoadedMatch, venueId: string): string {
+  private venueById(
+    match: LoadedMatch,
+    venueId: string,
+  ): { name: string; address: string } {
     const option = match.venueOptions.find((o) => o.venueId === venueId);
-    return option?.venue.name ?? 'el lugar acordado';
+    return {
+      name: option?.venue.name ?? 'el lugar acordado',
+      // Empty address is hidden by the email template's row filter.
+      address: option?.venue.address ?? '',
+    };
   }
 
   // A slot's calendar day (stored UTC-midnight) + local hour -> UTC instant (ms).
@@ -269,12 +279,13 @@ export class MatchConfirmationService {
             venueId: true,
             userASelected: true,
             userBSelected: true,
-            venue: { select: { name: true } },
+            venue: { select: { name: true, address: true } },
           },
         },
         userA: {
           select: {
             id: true,
+            email: true,
             cellphone: true,
             profile: { select: { name: true } },
           },
@@ -282,6 +293,7 @@ export class MatchConfirmationService {
         userB: {
           select: {
             id: true,
+            email: true,
             cellphone: true,
             profile: { select: { name: true } },
           },
@@ -310,4 +322,16 @@ function slotKey(slot: { date: Date; timeSlot: string }): string {
 
 function nameOf(user: { profile: { name: string } | null }): string {
   return user.profile?.name ?? 'tu match';
+}
+
+function recipientOf(user: {
+  email: string;
+  cellphone: string;
+  profile: { name: string } | null;
+}): Recipient {
+  return {
+    name: user.profile?.name ?? '',
+    email: user.email,
+    cellphone: user.cellphone,
+  };
 }
