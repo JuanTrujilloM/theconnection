@@ -1,0 +1,12 @@
+model ProfileHobby {
+  id        String   @id @default(cuid())
+  profileId String
+  hobbyId   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  hobby   Hobby   @relation(fields: [hobbyId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, hobbyId])
+}

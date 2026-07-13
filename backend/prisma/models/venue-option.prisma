@@ -1,0 +1,21 @@
+model VenueOption {
+  id            String   @id @default(cuid())
+  matchId       String
+  userAId       String
+  userBId       String
+  venueId       String
+  userASelected Boolean  @default(false)
+  userBSelected Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  userA User  @relation("VenueOptionUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User  @relation("VenueOptionUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  // One suggestion row per venue per match; backs skipDuplicates in getVenueSuggestions
+  // so concurrent first calls can't create a duplicate set.
+  @@unique([matchId, venueId])
+}
