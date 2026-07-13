@@ -1,29 +1,24 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { VenuesService } from '../venues/venues.service';
 import { ACTIVE_MATCH_STATUSES } from '../chatbot/user-context/match-status';
-import { MIN_VENUE_SELECTION, SUGGESTION_COUNT } from './matches.constants';
-import { MatchConfirmationService } from './match-confirmation.service';
+import { SUGGESTION_COUNT } from './matches.constants';
 
 type Venue = Awaited<ReturnType<VenuesService['findActive']>>[number];
 
 @Injectable()
 export class MatchesService {
-  private readonly logger = new Logger(MatchesService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly venues: VenuesService,
-    private readonly confirmation: MatchConfirmationService,
   ) {}
 
-  // Drives the dashboard: returns the active match (partner summary +
-  // whether the user still owes a venue selection), or null if none.
+  // Drives the dashboard: returns the active match (partner summary), or null.
+  // Venue selection lives only in the tokenized flow, so no pending flag here.
   async getCurrentMatch(userId: string) {
     const match = await this.prisma.match.findFirst({
       where: this.activeMatchWhere(userId),
@@ -35,16 +30,11 @@ export class MatchesService {
     });
     if (!match) return null;
 
-    const isUserA = match.userAId === userId;
-    const partner = isUserA ? match.userB : match.userA;
+    const partner = match.userAId === userId ? match.userB : match.userA;
     return {
       id: match.id,
       status: match.status,
       partner: this.toPartner(partner),
-      venueSelectionPending: await this.isVenueSelectionPending(
-        match.id,
-        isUserA,
-      ),
     };
   }
 
@@ -70,6 +60,8 @@ export class MatchesService {
           'Not enough active places to suggest. Add more in the admin panel.',
         );
       }
+      // skipDuplicates + @@unique([matchId, venueId]): concurrent first calls
+      // (both users opening their link at once) can't create a duplicate set.
       await this.prisma.venueOption.createMany({
         data: ranked.slice(0, SUGGESTION_COUNT).map((venue) => ({
           matchId: match.id,
@@ -77,6 +69,7 @@ export class MatchesService {
           userBId: match.userBId,
           venueId: venue.id,
         })),
+        skipDuplicates: true,
       });
       options = await this.prisma.venueOption.findMany({
         where: { matchId: match.id },
@@ -90,8 +83,9 @@ export class MatchesService {
     }));
   }
 
-  // Records this user's choices on the match's VenueOption rows. The final venue
-  // (where both users overlap) is resolved later, in the confirmation step (HU-08).
+  // Records this user's choices on the match's VenueOption rows — a pure venue
+  // write. The final venue (where both users overlap) is resolved later, by
+  // MatchConfirmationService after the last flow step (availability, HU-09).
   async selectVenues(userId: string, venueIds: string[]) {
     const match = await this.requireActiveMatch(userId);
     const isUserA = match.userAId === userId;
@@ -120,18 +114,7 @@ export class MatchesService {
       }),
     ]);
 
-    // HU-08: with places saved, try to schedule the date. No-op until the other
-    // user is also done. Isolated so a confirmation failure can't fail the save.
-    try {
-      await this.confirmation.tryConfirm(match.id);
-    } catch (error) {
-      this.logger.error(
-        `Confirmation check failed for match ${match.id}`,
-        error as Error,
-      );
-    }
-
-    return { selectedVenueIds: select, venueSelectionPending: false };
+    return { selectedVenueIds: select };
   }
 
   // Ranking: more shared-interest tag hits first; cheaper venue, then name, as
@@ -174,18 +157,6 @@ export class MatchesService {
       include: { hobbies: { include: { hobby: true } } },
     });
     return profile?.hobbies.map((ph) => ph.hobby.name.toLowerCase()) ?? [];
-  }
-
-  private async isVenueSelectionPending(
-    matchId: string,
-    isUserA: boolean,
-  ): Promise<boolean> {
-    const count = await this.prisma.venueOption.count({
-      where: isUserA
-        ? { matchId, userASelected: true }
-        : { matchId, userBSelected: true },
-    });
-    return count < MIN_VENUE_SELECTION;
   }
 
   private async requireActiveMatch(userId: string) {

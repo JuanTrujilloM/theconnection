@@ -7,6 +7,25 @@ import { CreatePreferencesDto } from './dto/create-preferences.dto';
 export class PreferencesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Pre-fills the edit form. Hobbies live on the profile (ProfileHobby), not on
+  // Preferences, so they're joined in and flattened to names.
+  async getByUserId(userId: string) {
+    const preferences = await this.prisma.preferences.findUnique({
+      where: { userId },
+    });
+    if (!preferences) return null;
+
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      include: { hobbies: { include: { hobby: true } } },
+    });
+
+    return {
+      ...preferences,
+      hobbies: profile?.hobbies.map((entry) => entry.hobby.name) ?? [],
+    };
+  }
+
   // HU-03: persist preferences + hobbies. Onboarding is considered complete once
   // both the profile and preferences exist (derived in AuthService), so there is
   // no flag to flip here. Requires an existing profile (HU-02 runs first).

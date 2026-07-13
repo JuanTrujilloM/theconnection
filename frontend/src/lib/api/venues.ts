@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Venue, VenuePayload, VenueSuggestion } from '@/types/venue';
+import type { Venue, VenuePayload } from '@/types/venue';
 
 // Admin venue management — gated server-side by the ADMIN_EMAILS allowlist.
 export async function fetchVenues(): Promise<Venue[]> {
@@ -26,25 +26,5 @@ export async function deactivateVenue(id: string): Promise<Venue> {
   return data;
 }
 
-// HU-06 — the 3 places suggested for the current match.
-export async function fetchVenueSuggestions(): Promise<VenueSuggestion[]> {
-  const { data } = await apiClient.get<VenueSuggestion[]>(
-    '/matches/current/venue-suggestions',
-  );
-  return data;
-}
-
-export type VenueSelectionResult = {
-  selectedVenueIds: string[];
-  venueSelectionPending: boolean;
-};
-
-export async function selectVenues(
-  venueIds: string[],
-): Promise<VenueSelectionResult> {
-  const { data } = await apiClient.post<VenueSelectionResult>(
-    '/matches/current/venue-selection',
-    { venueIds },
-  );
-  return data;
-}
+// HU-06 suggestion/selection calls live in lib/api/availability.ts — venue
+// selection runs only in the public tokenized flow.

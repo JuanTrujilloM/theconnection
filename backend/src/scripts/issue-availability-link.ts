@@ -4,9 +4,10 @@ import { AppModule } from '../app.module';
 import { PrismaService } from '../config/prisma.service';
 import { MatchInviteService } from '../modules/matches/match-invite.service';
 
-// Re-issues and prints the availability links (HU-09) for a match, without
-// re-running the whole weekly matcher. Handy for iterating on the frontend flow
-// or regenerating a link after it was consumed/expired.
+// Re-issues and prints the flow links (HU-06 places -> HU-09 availability) for
+// a match, without re-running the whole weekly matcher. Handy for iterating on
+// the frontend flow or regenerating a link after it was consumed/expired.
+// Note: re-issued links restart at the VENUE step, even after an HU-08 nudge.
 // Usage (after `npm run build`):
 //   node dist/scripts/issue-availability-link.js            # latest match
 //   node dist/scripts/issue-availability-link.js <matchId>  # a specific match

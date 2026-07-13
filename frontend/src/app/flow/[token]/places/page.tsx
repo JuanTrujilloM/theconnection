@@ -13,8 +13,8 @@ import {
 } from '@/hooks/useAvailabilityFlow';
 import { getApiErrorMessage } from '@/lib/utils/errors';
 
-// HU-06 over the same WhatsApp token — public place selection, reached after
-// availability is saved (Opción A: the whole flow runs without login).
+// HU-06 — public place selection, the ENTRY page of the WhatsApp token flow.
+// Time selection (HU-09) follows (Opción A: the whole flow runs without login).
 export default function TokenPlacesPage() {
   const { token } = useParams<{ token: string }>();
   return (
@@ -31,9 +31,8 @@ function PlacesContent({ token }: { token: string }) {
 
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
-  // Landed here without saving availability first; send them back a step.
+  // Places already chosen; forward to the time-selection step (HU-09).
   useEffect(() => {
     if (data?.step === 'AVAILABILITY') router.replace(`/availability/${token}`);
   }, [data?.step, token, router]);
@@ -56,17 +55,18 @@ function PlacesContent({ token }: { token: string }) {
     );
   }
 
-  if (!data || data.step === 'AVAILABILITY') return null; // redirecting
-
-  if (saved) {
+  // The link was consumed: the whole flow is done for this user.
+  if (data?.step === 'COMPLETED') {
     return (
       <FlowState
         emoji="✅"
         title="¡Listo!"
-        description="Guardamos tus lugares. Te avisaremos por WhatsApp cuando tu match también elija, para confirmar el sitio final de la cita."
+        description="Ya completaste este paso. Te avisaremos por WhatsApp cuando tu match también termine, para confirmar la cita."
       />
     );
   }
+
+  if (!data || data.step === 'AVAILABILITY') return null; // redirecting
 
   const serverSelected = data.venues
     .filter((venue) => venue.selected)
@@ -94,7 +94,8 @@ function PlacesContent({ token }: { token: string }) {
     }
     try {
       await select.mutateAsync(selectedIds);
-      setSaved(true);
+      // Places saved -> time selection (HU-09), the last step.
+      router.replace(`/availability/${token}`);
     } catch (err) {
       setFormError(getApiErrorMessage(err));
     }

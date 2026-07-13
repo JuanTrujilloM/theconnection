@@ -32,10 +32,9 @@ function makeStore(ttlHours = '72') {
         }
         return Promise.resolve({ count: 0 });
       },
-      create: ({ data }: { data: Omit<Row, 'id' | 'step' | 'consumedAt'> }) => {
+      create: ({ data }: { data: Omit<Row, 'id' | 'consumedAt'> }) => {
         const row: Row = {
           id: `link-${rows.length}`,
-          step: 'AVAILABILITY',
           consumedAt: null,
           ...data,
         };
@@ -95,7 +94,7 @@ describe('AvailabilityLinkService', () => {
     expect(rows[0].tokenHash).toHaveLength(64); // sha256 hex
   });
 
-  it('validates a fresh token as ok with its match/user', async () => {
+  it('validates a fresh token as ok, starting at the VENUE step', async () => {
     const { service } = makeStore();
     const token = await service.issueForMatchUser('m1', 'u1');
     const result = await service.validate(token);
@@ -105,8 +104,17 @@ describe('AvailabilityLinkService', () => {
         id: 'link-0',
         matchId: 'm1',
         userId: 'u1',
-        step: 'AVAILABILITY',
+        step: 'VENUE',
       },
+    });
+  });
+
+  it('issues nudge links directly at the AVAILABILITY step', async () => {
+    const { service } = makeStore();
+    const token = await service.issueForMatchUser('m1', 'u1', 'AVAILABILITY');
+    expect(await service.validate(token)).toMatchObject({
+      status: 'ok',
+      link: { step: 'AVAILABILITY' },
     });
   });
 
@@ -138,13 +146,16 @@ describe('AvailabilityLinkService', () => {
     expect(await service.validate(first)).toEqual({ status: 'invalid' });
   });
 
-  it('advances the step to VENUE', async () => {
+  it('advances the step from VENUE to AVAILABILITY', async () => {
     const { service } = makeStore();
     const token = await service.issueForMatchUser('m1', 'u1');
     const ok = await service.validate(token);
     if (ok.status !== 'ok') throw new Error('expected ok');
-    await service.advanceToVenue(ok.link.id);
+    await service.setStep(ok.link.id, 'AVAILABILITY');
     const after = await service.validate(token);
-    expect(after).toMatchObject({ status: 'ok', link: { step: 'VENUE' } });
+    expect(after).toMatchObject({
+      status: 'ok',
+      link: { step: 'AVAILABILITY' },
+    });
   });
 });

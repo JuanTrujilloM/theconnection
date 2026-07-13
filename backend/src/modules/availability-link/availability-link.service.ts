@@ -29,7 +29,13 @@ export class AvailabilityLinkService {
   // Opaque token; DB keeps only its hash. Plaintext is returned so the caller
   // can build the WhatsApp URL — it never hits the DB. One link per (match,user):
   // re-issuing drops the previous row (@@unique), so an old link stops working.
-  async issueForMatchUser(matchId: string, userId: string): Promise<string> {
+  // Initial links start at VENUE (places first); HU-08 nudge links are issued at
+  // AVAILABILITY so the user is not walked through venues again.
+  async issueForMatchUser(
+    matchId: string,
+    userId: string,
+    step: LinkStep = 'VENUE',
+  ): Promise<string> {
     const token = randomBytes(32).toString('base64url');
     await this.prisma.availabilityLink.deleteMany({
       where: { matchId, userId },
@@ -38,6 +44,7 @@ export class AvailabilityLinkService {
       data: {
         matchId,
         userId,
+        step,
         tokenHash: this.hash(token),
         expiresAt: this.computeExpiry(),
       },
@@ -65,11 +72,11 @@ export class AvailabilityLinkService {
     };
   }
 
-  // Availability saved -> the same link now serves the place-selection step (HU-06).
-  async advanceToVenue(linkId: string): Promise<void> {
+  // Moves the link to its next step (VENUE -> AVAILABILITY in the normal flow).
+  async setStep(linkId: string, step: LinkStep): Promise<void> {
     await this.prisma.availabilityLink.update({
       where: { id: linkId },
-      data: { step: 'VENUE' },
+      data: { step },
     });
   }
 
@@ -89,11 +96,15 @@ export class AvailabilityLinkService {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  private computeExpiry(): Date {
-    const hours = Number(
+  // Public so notifications can state the real expiry ("expires in N days").
+  ttlHours(): number {
+    return Number(
       this.config.get<string>('AVAILABILITY_LINK_TTL_HOURS') ??
         DEFAULT_TTL_HOURS,
     );
-    return new Date(Date.now() + hours * 60 * 60 * 1000);
+  }
+
+  private computeExpiry(): Date {
+    return new Date(Date.now() + this.ttlHours() * 60 * 60 * 1000);
   }
 }

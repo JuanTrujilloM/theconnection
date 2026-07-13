@@ -13,8 +13,8 @@ import {
 } from '@/hooks/useAvailabilityFlow';
 import { getApiErrorMessage } from '@/lib/utils/errors';
 
-// HU-09 — public availability picker opened from the first WhatsApp link. No
-// AuthGate: the path token is the credential.
+// HU-09 — public availability picker, the LAST step of the WhatsApp token flow
+// (place selection comes first). No AuthGate: the path token is the credential.
 export default function AvailabilityPage() {
   const { token } = useParams<{ token: string }>();
   return (
@@ -31,8 +31,9 @@ function AvailabilityContent({ token }: { token: string }) {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [formError, setFormError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
-  // A VENUE-step link already has availability saved; forward to place selection.
+  // A VENUE-step link hasn't chosen places yet; forward to that step first.
   useEffect(() => {
     if (data?.step === 'VENUE') router.replace(`/flow/${token}/places`);
   }, [data?.step, token, router]);
@@ -50,6 +51,17 @@ function AvailabilityContent({ token }: { token: string }) {
         emoji="🔗"
         title="Este enlace ya no es válido"
         description="El enlace expiró o ya fue usado. Espera tu próxima notificación de WhatsApp para agendar tu cita."
+      />
+    );
+  }
+
+  // Flow finished: just submitted, or re-opening an already-consumed link.
+  if (done || data?.step === 'COMPLETED') {
+    return (
+      <FlowState
+        emoji="✅"
+        title="¡Listo!"
+        description="Guardamos tus lugares y horarios. Te avisaremos por WhatsApp cuando tu match también termine, para confirmar el día, la hora y el lugar de la cita."
       />
     );
   }
@@ -79,8 +91,8 @@ function AvailabilityContent({ token }: { token: string }) {
     });
     try {
       await submit.mutateAsync(slots);
-      // AC #4: saved -> place selection step (HU-06).
-      router.replace(`/flow/${token}/places`);
+      // Last step saved: the link is consumed and the HU-08 check runs.
+      setDone(true);
     } catch (err) {
       setFormError(getApiErrorMessage(err));
     }

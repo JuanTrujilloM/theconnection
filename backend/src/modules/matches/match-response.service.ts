@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../config/prisma.service';
-import { WhatsappNotifierService } from '../whatsapp/whatsapp-notifier.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { ACTIVE_MATCH_STATUSES } from '../chatbot/user-context/match-status';
 import {
   REJECTED_MATCH_STATUS,
@@ -21,7 +21,7 @@ export class MatchResponseService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notifier: WhatsappNotifierService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // Chatbot-driven rejection. rejectedById records who declined (AC #6); the
@@ -97,8 +97,17 @@ export class MatchResponseService {
   private async notifyRejected(userId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { cellphone: true },
+      select: {
+        email: true,
+        cellphone: true,
+        profile: { select: { name: true } },
+      },
     });
-    if (user) await this.notifier.sendMatchRejected(user.cellphone);
+    if (!user) return;
+    await this.notifications.notifyMatchRejected({
+      name: user.profile?.name ?? '',
+      email: user.email,
+      cellphone: user.cellphone,
+    });
   }
 }
