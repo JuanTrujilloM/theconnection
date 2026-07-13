@@ -31,9 +31,11 @@ function setup() {
     // Service passes an array of prisma ops; run them like a real transaction.
     $transaction: (ops: Promise<unknown>[]) => Promise.all(ops),
     match: {
+      // Thursday 2026-07-09 19:00 — the calendar window anchors on this, not "today".
       findUnique: jest.fn().mockResolvedValue({
         userAId: 'u1',
         userBId: 'u2',
+        createdAt: new Date('2026-07-09T19:00:00'),
         userA: { profile: { name: 'Ana' } },
         userB: { profile: { name: 'Beto' } },
       }),
@@ -73,6 +75,18 @@ describe('AvailabilityService', () => {
       expect(view.days).toHaveLength(7);
       expect(view.timeSlots).toEqual([...TIME_SLOTS]);
       expect(view.partnerName).toBe('Beto'); // partner of u1
+    });
+
+    it('starts the window the day after the match was created', async () => {
+      const { service, links } = setup();
+      links.validate.mockResolvedValue(OK_AVAILABILITY);
+
+      const view = await service.getAvailabilityView('t');
+      if (view.step !== 'AVAILABILITY') throw new Error('expected calendar');
+      // Match created Thursday 2026-07-09 -> first offered day is Friday the 10th,
+      // last is the following Thursday the 16th.
+      expect(view.days[0].date).toBe('2026-07-10');
+      expect(view.days[6].date).toBe('2026-07-16');
     });
 
     it('signals a redirect when places are not chosen yet (VENUE step)', async () => {

@@ -53,10 +53,11 @@ export class AvailabilityService {
     if (link.step === 'VENUE') {
       return { step: 'VENUE' as const };
     }
+    const match = await this.loadMatch(link.matchId);
     return {
       step: 'AVAILABILITY' as const,
-      partnerName: await this.partnerName(link),
-      days: this.buildCalendarDays(),
+      partnerName: this.partnerNameFrom(match, link.userId),
+      days: this.buildCalendarDays(this.windowAnchor(match)),
       timeSlots: [...TIME_SLOTS],
     };
   }
@@ -69,7 +70,8 @@ export class AvailabilityService {
       throw new BadRequestException('Primero elige tus lugares.');
     }
 
-    const rows = this.validateSlots(link, slots);
+    const match = await this.loadMatch(link.matchId);
+    const rows = this.validateSlots(link, slots, this.windowAnchor(match));
 
     // Delete-then-insert atomically: a crash mid-way must not leave partial slots.
     await this.prisma.$transaction([
@@ -105,7 +107,10 @@ export class AvailabilityService {
     }
     return {
       step: 'VENUE' as const,
-      partnerName: await this.partnerName(link),
+      partnerName: this.partnerNameFrom(
+        await this.loadMatch(link.matchId),
+        link.userId,
+      ),
       minSelection: MIN_VENUE_SELECTION,
       venues: await this.matches.getVenueSuggestions(link.userId),
     };
@@ -158,8 +163,12 @@ export class AvailabilityService {
   // Rejects anything outside the calendar the user was shown: unknown slot,
   // a day beyond the 7-day window, or duplicates. Server-side twin of the
   // frontend validation — the endpoint is public, so it can't trust the client.
-  private validateSlots(link: ValidatedLink, slots: SlotSelectionDto[]) {
-    const allowedDates = new Set(this.calendarDateKeys());
+  private validateSlots(
+    link: ValidatedLink,
+    slots: SlotSelectionDto[],
+    anchor: Date,
+  ) {
+    const allowedDates = new Set(this.calendarDateKeys(anchor));
     const allowedTimeSlots = new Set<string>(TIME_SLOTS);
     const seen = new Set<string>();
 
@@ -185,37 +194,56 @@ export class AvailabilityService {
     });
   }
 
-  private async partnerName(link: ValidatedLink): Promise<string | null> {
-    const match = await this.prisma.match.findUnique({
-      where: { id: link.matchId },
+  // One fetch feeds both the partner name and the calendar window anchor.
+  private loadMatch(matchId: string) {
+    return this.prisma.match.findUnique({
+      where: { id: matchId },
       include: {
         userA: { include: { profile: { select: { name: true } } } },
         userB: { include: { profile: { select: { name: true } } } },
       },
     });
+  }
+
+  private partnerNameFrom(
+    match: Awaited<ReturnType<typeof this.loadMatch>>,
+    userId: string,
+  ): string | null {
     if (!match) return null;
-    const partner = match.userAId === link.userId ? match.userB : match.userA;
+    const partner = match.userAId === userId ? match.userB : match.userA;
     return partner.profile?.name ?? null;
   }
 
-  // Next 7 days from today, each labeled for the calendar header (e.g. "mié 9 jul").
-  private buildCalendarDays() {
-    return this.calendarDates().map((date) => ({
+  // The calendar starts the day AFTER the match was created, so a matching run on
+  // (e.g.) Thursday night offers Friday onward, not the run day itself. Anchored on
+  // the match — not "today" — so both users see the same window whenever they open
+  // their link. Falls back to now for a missing match (shouldn't happen on a valid link).
+  private windowAnchor(
+    match: Awaited<ReturnType<typeof this.loadMatch>>,
+  ): Date {
+    return match?.createdAt ?? new Date();
+  }
+
+  // Seven days starting the day after the anchor, each labeled for the calendar
+  // header (e.g. "mié 9 jul").
+  private buildCalendarDays(anchor: Date) {
+    return this.calendarDates(anchor).map((date) => ({
       date: this.dateKey(date),
       label: `${WEEKDAYS[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`,
     }));
   }
 
-  private calendarDateKeys(): string[] {
-    return this.calendarDates().map((date) => this.dateKey(date));
+  private calendarDateKeys(anchor: Date): string[] {
+    return this.calendarDates(anchor).map((date) => this.dateKey(date));
   }
 
-  private calendarDates(): Date[] {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  private calendarDates(anchor: Date): Date[] {
+    const start = new Date(anchor);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() + 1); // first offered day = day after the match run
     return Array.from({ length: CALENDAR_DAYS }, (_, offset) => {
-      const day = new Date(today);
-      day.setDate(today.getDate() + offset);
+      const day = new Date(start);
+      day.setDate(start.getDate() + offset);
       return day;
     });
   }
