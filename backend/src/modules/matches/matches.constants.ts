@@ -4,3 +4,6 @@
 // venue. Shared by the service (generation) and the DTO (validation) so they agree.
 export const SUGGESTION_COUNT = 3;
 export const MIN_VENUE_SELECTION = 2;
+
+// Dashboard stats: weeksActive counts weekly cycles since signup.
+export const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;

@@ -22,6 +22,13 @@ export const SCORE_WEIGHTS = {
   feedback: 1, // AC #9 — partner reliability nudge
 } as const;
 
+// Maximum points a pair can score: every signal maxed out. Used to turn the raw
+// score into a 0–100 compatibility percentage for display.
+export const MAX_COMPATIBILITY_SCORE = Object.values(SCORE_WEIGHTS).reduce(
+  (total, weight) => total + weight,
+  0,
+);
+
 // A shared hobby is worth full weight up to this many; beyond it adds nothing,
 // so one pair with 8 identical hobbies doesn't dwarf every other signal.
 export const MAX_SCORED_SHARED_HOBBIES = 4;
