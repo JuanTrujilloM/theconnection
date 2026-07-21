@@ -15,4 +15,9 @@ export class MatchesController {
   getCurrent(@CurrentUser() user: AuthenticatedUser) {
     return this.matchesService.getCurrentMatch(user.userId);
   }
+
+  @Get('stats')
+  getStats(@CurrentUser() user: AuthenticatedUser) {
+    return this.matchesService.getStats(user.userId);
+  }
 }

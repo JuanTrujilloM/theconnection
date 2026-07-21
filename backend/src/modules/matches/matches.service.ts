@@ -6,7 +6,8 @@ import {
 import { PrismaService } from '../../config/prisma.service';
 import { VenuesService } from '../venues/venues.service';
 import { ACTIVE_MATCH_STATUSES } from '../chatbot/user-context/match-status';
-import { SUGGESTION_COUNT } from './matches.constants';
+import { SUGGESTION_COUNT, MILLISECONDS_PER_WEEK } from './matches.constants';
+import { MAX_COMPATIBILITY_SCORE } from './weekly-matching.constants';
 
 type Venue = Awaited<ReturnType<VenuesService['findActive']>>[number];
 
@@ -19,6 +20,8 @@ export class MatchesService {
 
   // Drives the dashboard: returns the active match (partner summary), or null.
   // Venue selection lives only in the tokenized flow, so no pending flag here.
+  // date is present only once the match is scheduled (status 'confirmed'), so the
+  // dashboard can render the confirmed-date hero without a second request.
   async getCurrentMatch(userId: string) {
     const match = await this.prisma.match.findFirst({
       where: this.activeMatchWhere(userId),
@@ -26,6 +29,7 @@ export class MatchesService {
       include: {
         userA: { include: { profile: { include: { photos: true } } } },
         userB: { include: { profile: { include: { photos: true } } } },
+        date: { include: { venue: true } },
       },
     });
     if (!match) return null;
@@ -34,8 +38,44 @@ export class MatchesService {
     return {
       id: match.id,
       status: match.status,
+      // Raw score is 0..MAX_COMPATIBILITY_SCORE; the dashboard shows a percentage.
+      compatibilityPercent: Math.round(
+        Math.min(1, match.compatibilityScore / MAX_COMPATIBILITY_SCORE) * 100,
+      ),
       partner: this.toPartner(partner),
+      date: match.date
+        ? {
+            venueName: match.date.venue.name,
+            address: match.date.venue.address,
+            scheduledAt: match.date.scheduledAt,
+          }
+        : null,
     };
+  }
+
+  // Dashboard "home con contexto" counters. weeksActive is measured from the
+  // user's signup so a brand-new account shows 1, not 0.
+  async getStats(userId: string) {
+    const [user, totalMatches, totalDates] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { createdAt: true },
+      }),
+      this.prisma.match.count({ where: this.involvesUser(userId) }),
+      this.prisma.date.count({ where: { match: this.involvesUser(userId) } }),
+    ]);
+
+    const since = user?.createdAt ?? new Date();
+    const weeksActive = Math.max(
+      1,
+      Math.ceil((Date.now() - since.getTime()) / MILLISECONDS_PER_WEEK),
+    );
+
+    return { totalMatches, totalDates, weeksActive };
+  }
+
+  private involvesUser(userId: string) {
+    return { OR: [{ userAId: userId }, { userBId: userId }] };
   }
 
   // HU-06: 3 places aligned with both users' shared interests. The 3 options are
