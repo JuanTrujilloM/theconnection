@@ -13,6 +13,7 @@ import { MatchesModule } from './modules/matches/matches.module';
 import { AvailabilityModule } from './modules/availability/availability.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AdminModule } from './modules/admin/admin.module';
     AvailabilityModule,
     ChatbotModule,
     AdminModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],
